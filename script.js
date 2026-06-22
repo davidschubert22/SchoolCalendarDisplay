@@ -30,64 +30,7 @@
     wrapper.style.transform = `translate(${offsetX}px, 0px) scale(${scale})`;
   }
 
-  // ── Theme (background video + accent colour) ───────────────────────────────
-
-  function hexToRgba(hex, a) {
-    const v = hex.replace('#', '');
-    const r = parseInt(v.slice(0, 2), 16);
-    const g = parseInt(v.slice(2, 4), 16);
-    const b = parseInt(v.slice(4, 6), 16);
-    return `rgba(${r},${g},${b},${a})`;
-  }
-
-  // Samples an <img> or <video> onto a tiny offscreen canvas and reports
-  // perceived luminance (0 = black, 1 = white) via callback(lum|null).
-  // null means sampling failed (e.g. canvas tainted by a cross-origin source).
-  function sampleLuminance(source, callback) {
-    try {
-      const w = 32, h = 18;
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(source, 0, 0, w, h);
-      const { data } = ctx.getImageData(0, 0, w, h);
-      let total = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        total += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
-      }
-      callback(total / (data.length / 4) / 255);
-    } catch (err) {
-      callback(null);
-    }
-  }
-
-  // Picks light/dark UI text-and-panel colours by sampling the background's
-  // average brightness, so text always contrasts with whatever video is showing.
-  function applyBackgroundContrast(chosen) {
-    const LIGHT_THRESHOLD = 0.5;
-
-    function setScheme(lum) {
-      const isLight = lum !== null && lum > LIGHT_THRESHOLD;
-      document.documentElement.classList.toggle('theme-light', isLight);
-      document.documentElement.classList.toggle('theme-dark', !isLight);
-    }
-
-    if (chosen?.poster) {
-      const img = new Image();
-      img.onload = () => sampleLuminance(img, setScheme);
-      img.onerror = () => setScheme(null);
-      img.src = chosen.poster;
-      return;
-    }
-
-    // No poster configured: fall back to sampling the video itself once a
-    // frame is actually decoded.
-    const elVideo = document.getElementById('background-video');
-    const trySample = () => sampleLuminance(elVideo, setScheme);
-    if (elVideo.readyState >= 2) trySample();
-    else elVideo.addEventListener('loadeddata', trySample, { once: true });
-  }
+  // ── Theme (background video) ────────────────────────────────────────────────
 
   function applyTheme() {
     const month = now().getMonth() + 1;
@@ -96,12 +39,6 @@
     for (const t of Object.values(themes)) {
       if (t.months && t.months.includes(month)) { chosen = t; break; }
     }
-
-    const accent = chosen?.accent || '#FFD166';
-    document.documentElement.style.setProperty('--accent', accent);
-    document.documentElement.style.setProperty('--accent-soft', hexToRgba(accent, 0.22));
-
-    applyBackgroundContrast(chosen);
 
     const elVideo = document.getElementById('background-video');
     if (chosen?.bg) {

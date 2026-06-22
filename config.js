@@ -6,7 +6,7 @@ window.CALENDAR_CONFIG = {
   // DEV ONLY: override the current date for theme/calendar previewing.
   // Set to any date string recognised by new Date(), e.g. "2025-10-15".
   // Comment out or set to null to use the real date.
-    // DEV_DATE: "2026-05-14",
+     DEV_DATE: "2026-05-14",
 
   // Your Cloudflare Worker that fetches the ICS (CORS-safe)
   ICS_URL: "https://red-frost-1be1.dtestechnology.workers.dev/",
@@ -37,79 +37,57 @@ window.CALENDAR_CONFIG = {
   WEATHER_IFRAME_SRC:
     "https://www.weatherlink.com/embeddablePage/show/70d6629b55214481b526a8159850212d/slim",
 
-  // Auto themes by month: background video, poster (for contrast sampling), accent colour
+  // Background video by month. Panel/text colors are fixed (see styles.css
+  // :root) rather than auto-adapting, so pick videos that read well with a
+  // dark, semi-transparent overlay.
 THEMES: {
   january: {
     months: [1],
-    bg: "assets/01-january.mp4",
-    poster: "assets/posters/01-january.jpg",
-    accent: "#7DD3FC",
+    bg: "assets/01-january.mp4"
   },
   february: {
     months: [2],
-    bg: "assets/02-february.mp4",
-    poster: "assets/posters/02-february.jpg",
-    accent: "#7DD3FC",
+    bg: "assets/02-february.mp4"
   },
   march: {
     months: [3],
-    bg: "assets/03-march.mp4",
-    poster: "assets/posters/03-march.jpg",
-    accent: "#34D399",
+    bg: "assets/03-march.mp4"
   },
   april: {
     months: [4],
-    bg: "assets/04-april.mp4",
-    poster: "assets/posters/04-april.jpg",
-    accent: "#34D399",
+    bg: "assets/04-april.mp4"
   },
   may: {
     months: [5],
-    bg: "assets/05-may.mp4",
-    poster: "assets/posters/05-may.jpg",
-    accent: "#34D399",
+    bg: "assets/05-may.mp4"
   },
   june: {
     months: [6],
-    bg: "assets/06-june.mp4",
-    poster: "assets/posters/06-june.jpg",
-    accent: "#FBBF24",
+    bg: "assets/06-june.mp4"
   },
   july: {
     months: [7],
-    bg: "assets/07-july.mp4",
-    poster: "assets/posters/07-july.jpg",
-    accent: "#FBBF24",
+    bg: "assets/07-july.mp4"
   },
   august: {
     months: [8],
-    bg: "assets/08-august.mp4",
-    poster: "assets/posters/08-august.jpg",
-    accent: "#FBBF24",
+    bg: "assets/08-august.mp4"
   },
   september: {
     months: [9],
-    bg: "assets/09-september.mp4",
-    poster: "assets/posters/09-september.jpg",
-    accent: "#F59E0B",
+    bg: "assets/09-september.mp4"
   },
   october: {
     months: [10],
-    bg: "assets/10-october.mp4",
-    poster: "assets/posters/10-october.jpg",
-    accent: "#F59E0B",
+    bg: "assets/10-october.mp4"
   },
   november: {
     months: [11],
-    bg: "assets/11-november.mp4",
-    poster: "assets/posters/11-november.jpg",
-    accent: "#F59E0B",
+    bg: "assets/11-november.mp4"
   },
   december: {
     months: [12],
-    bg: "assets/12-december.mp4",
-    poster: "assets/posters/12-december.jpg",
-    accent: "#7DD3FC",
+    bg: "assets/12-december.mp4"
   }
 }
 

@@ -15,18 +15,6 @@
   --gap: 18px;
 }
 
-/* ── Light scheme: applied by JS when the sampled background is bright ── */
-html.theme-light {
-  --card-bg: rgba(255, 255, 255, 0.55);
-  --card-bg-soft: rgba(255, 255, 255, 0.42);
-  --card-border: rgba(15, 23, 42, 0.18);
-  --card-border-soft: rgba(15, 23, 42, 0.12);
-  --text: #0F172A;
-  --muted: #334155;
-  --text-shadow: 0 1px 3px rgba(255, 255, 255, 0.55);
-  --shadow: rgba(0, 0, 0, 0.25);
-}
-
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body {
