@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Weekly Events Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <video id="background-video" autoplay muted loop playsinline></video>
+  <div id="scrim"></div>
+
+<div id="ui-scale-wrapper">
+  <main class="layout">
+    <div class="content">
+      <header class="topbar">
+        <div class="title">
+          <img id="logo" src="assets/logo.png" alt="Logo" />
+          <div class="titlestack">
+            <h1 id="board-title"></h1>
+            <p class="subtitle" id="date-range"></p>
+          </div>
+        </div>
+      </header>
+
+      <div class="scroll-viewport" id="scroll-viewport">
+        <div class="scroll-track" id="scroll-track">
+          <section id="now" class="now hidden">
+            <div class="section-title-box"><h2 class="section-title">Happening Now</h2></div>
+            <div class="now-wrap" id="now-wrap"></div>
+          </section>
+
+          <section id="this-week" class="week">
+            <div class="section-title-box"><h2 class="section-title">This Week</h2></div>
+            <div id="days" class="day-grid"></div>
+          </section>
+
+          <section id="next-week" class="week hidden">
+            <div class="section-title-box"><h2 class="section-title">Next Week</h2></div>
+            <div id="next-days" class="day-grid"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="clockbox">
+        <div class="clock" id="clock"></div>
+      </div>
+      <div class="weather-wrap">
+        <iframe class="weather" title="Weather" src="" loading="lazy"></iframe>
+      </div>
+      <div class="theme-box">
+        <img class="theme-image" src="assets/theme-graphic.png" alt="Theme" />
+      </div>
+    </aside>
+  </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
