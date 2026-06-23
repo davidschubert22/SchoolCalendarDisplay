@@ -29,6 +29,31 @@
   const elScrollViewport = document.getElementById('scroll-viewport');
   const elScrollTrack    = document.getElementById('scroll-track');
 
+  // TEMPORARY: on-screen diagnostics for the Fire Stick/Fully Kiosk
+  // "video background is absent" issue. Remove this block (and the
+  // #video-debug div/CSS) once that's resolved. Catches uncaught JS
+  // errors too, since there's no remote dev-tools access to this device.
+  const elDebug = document.getElementById('video-debug');
+  const debugState = { video: '', canvas: '', jsErrors: [] };
+  function renderDebug() {
+    if (!elDebug) return;
+    const lines = [debugState.video, debugState.canvas];
+    if (debugState.jsErrors.length) lines.push('errors:\n' + debugState.jsErrors.join('\n'));
+    elDebug.textContent = lines.filter(Boolean).join('\n');
+  }
+  function logDebugError(msg) {
+    debugState.jsErrors.push(msg);
+    if (debugState.jsErrors.length > 5) debugState.jsErrors.shift();
+    renderDebug();
+  }
+  window.addEventListener('error', e => {
+    logDebugError(`JS: ${e.message} @ ${(e.filename || '').split('/').pop()}:${e.lineno}`);
+  });
+  window.addEventListener('unhandledrejection', e => {
+    const r = e.reason;
+    logDebugError(`Promise: ${r && r.message ? r.message : r}`);
+  });
+
   // ── Viewport scaling ──────────────────────────────────────────────────────
   // Scales the fixed 1920×1080 canvas to fill any screen, centered (letterbox
   // or pillarbox for non-16:9 screens). Works both up (4K) and down (<1080p).
@@ -56,17 +81,41 @@
     resize();
     window.addEventListener('resize', resize);
 
+    // TEMPORARY: surfaces whether real frame pixels are actually landing in
+    // the canvas (vs. blank/black), and whether drawImage(video) itself
+    // throws on this device. See the diagnostics block above.
+    function sampleCanvas() {
+      try {
+        const cw = elCanvas.width, ch = elCanvas.height;
+        if (!cw || !ch) {
+          debugState.canvas = `canvas: zero size (${cw}x${ch})`;
+        } else {
+          const d = ctx.getImageData((cw / 2) | 0, (ch / 2) | 0, 1, 1).data;
+          debugState.canvas = `canvas: ${cw}x${ch}  center px rgba(${d[0]},${d[1]},${d[2]},${d[3]})`;
+        }
+      } catch (e) {
+        debugState.canvas = `canvas: getImageData threw ${e.name}: ${e.message}`;
+      }
+      renderDebug();
+    }
+
     function draw() {
       const vw = elVideo.videoWidth, vh = elVideo.videoHeight;
       if (elVideo.readyState >= elVideo.HAVE_CURRENT_DATA && vw && vh) {
-        const cw = elCanvas.width, ch = elCanvas.height;
-        const scale = Math.max(cw / vw, ch / vh);
-        const dw = vw * scale, dh = vh * scale;
-        ctx.drawImage(elVideo, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+        try {
+          const cw = elCanvas.width, ch = elCanvas.height;
+          const scale = Math.max(cw / vw, ch / vh);
+          const dw = vw * scale, dh = vh * scale;
+          ctx.drawImage(elVideo, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+        } catch (e) {
+          debugState.canvas = `canvas: drawImage threw ${e.name}: ${e.message}`;
+          renderDebug();
+        }
       }
       requestAnimationFrame(draw);
     }
     requestAnimationFrame(draw);
+    setInterval(sampleCanvas, 1000);
   }
 
   function applyTheme() {
@@ -79,21 +128,16 @@
 
     const elVideo = document.getElementById('background-video');
     const elCanvas = document.getElementById('background-canvas');
-    const elDebug = document.getElementById('video-debug');
 
     startVideoCanvasLoop(elVideo, elCanvas);
 
-    // TEMPORARY: on-screen diagnostics for the Fire Stick/Fully Kiosk
-    // "video background is absent" issue. Remove this block (and the
-    // #video-debug div/CSS) once that's resolved.
     const READY = ['HAVE_NOTHING', 'HAVE_METADATA', 'HAVE_CURRENT_DATA', 'HAVE_FUTURE_DATA', 'HAVE_ENOUGH_DATA'];
     const NETWORK = ['NETWORK_EMPTY', 'NETWORK_IDLE', 'NETWORK_LOADING', 'NETWORK_NO_SOURCE'];
     const MEDIA_ERR = ['', 'MEDIA_ERR_ABORTED', 'MEDIA_ERR_NETWORK', 'MEDIA_ERR_DECODE', 'MEDIA_ERR_SRC_NOT_SUPPORTED'];
     let playRejection = '';
     function logVideoDebug() {
-      if (!elDebug) return;
       const err = elVideo.error;
-      elDebug.textContent = [
+      debugState.video = [
         `src: ${elVideo.currentSrc || '(none)'}`,
         `readyState: ${READY[elVideo.readyState] ?? elVideo.readyState}`,
         `networkState: ${NETWORK[elVideo.networkState] ?? elVideo.networkState}`,
@@ -102,7 +146,8 @@
         `error: ${err ? `${MEDIA_ERR[err.code] || err.code} - ${err.message || ''}` : 'none'}`,
         `canPlayType h264: ${elVideo.canPlayType('video/mp4; codecs="avc1.640028"') || '(empty = no)'}`,
         playRejection ? `play() rejected: ${playRejection}` : null,
-      ].filter(Boolean).join('\n');
+      ].filter(Boolean).join(' | ');
+      renderDebug();
     }
 
     if (chosen?.bg) {
