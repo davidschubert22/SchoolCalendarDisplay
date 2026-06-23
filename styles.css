@@ -26,13 +26,28 @@ html, body {
   color: var(--text);
 }
 
-/* ── Full-screen background ── */
+/* ── Full-screen background ──
+   The <video> itself is kept tiny/invisible — it only exists to decode
+   frames. Some Android TV/Fire TV WebViews push hardware-decoded <video>
+   to a hardware overlay surface that never composites with the rest of
+   the page (renders as solid black). #background-canvas is painted from
+   the video's current frame every animation frame instead, which is
+   always normal bitmap content and isn't subject to that bug. */
 #background-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#background-canvas {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
   z-index: 0;
   filter: saturate(1.08) brightness(0.9);
 }

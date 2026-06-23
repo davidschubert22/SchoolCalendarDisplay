@@ -43,6 +43,32 @@
 
   // ── Theme (background video) ────────────────────────────────────────────────
 
+  // Paints the <video>'s current frame onto a same-sized <canvas> every
+  // frame, emulating object-fit: cover. See the comment above
+  // #background-video in styles.css for why this exists.
+  function startVideoCanvasLoop(elVideo, elCanvas) {
+    const ctx = elCanvas.getContext('2d');
+
+    function resize() {
+      elCanvas.width = window.innerWidth;
+      elCanvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function draw() {
+      const vw = elVideo.videoWidth, vh = elVideo.videoHeight;
+      if (elVideo.readyState >= elVideo.HAVE_CURRENT_DATA && vw && vh) {
+        const cw = elCanvas.width, ch = elCanvas.height;
+        const scale = Math.max(cw / vw, ch / vh);
+        const dw = vw * scale, dh = vh * scale;
+        ctx.drawImage(elVideo, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+      }
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  }
+
   function applyTheme() {
     const month = now().getMonth() + 1;
     const themes = cfg.THEMES || {};
@@ -52,7 +78,10 @@
     }
 
     const elVideo = document.getElementById('background-video');
+    const elCanvas = document.getElementById('background-canvas');
     const elDebug = document.getElementById('video-debug');
+
+    startVideoCanvasLoop(elVideo, elCanvas);
 
     // TEMPORARY: on-screen diagnostics for the Fire Stick/Fully Kiosk
     // "video background is absent" issue. Remove this block (and the
