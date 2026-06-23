@@ -8,10 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <script>document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">');</script>
 </head>
 <body>
   <video id="background-video" autoplay muted loop playsinline></video>
+  <div id="video-debug"></div>
   <div id="scrim"></div>
 
 <div id="ui-scale-wrapper">
@@ -19,7 +20,7 @@
     <div class="content">
       <header class="topbar">
         <div class="title">
-          <img id="logo" src="assets/logo.png" alt="Logo" />
+          <script>document.write('<img id="logo" src="assets/logo.png?v=' + Date.now() + '" alt="Logo">');</script>
           <div class="titlestack">
             <h1 id="board-title"></h1>
             <p class="subtitle" id="date-range"></p>
@@ -55,13 +56,15 @@
         <iframe class="weather" title="Weather" src="" loading="lazy"></iframe>
       </div>
       <div class="theme-box">
-        <img class="theme-image" src="assets/theme-graphic.png" alt="Theme" />
+        <script>document.write('<img class="theme-image" src="assets/theme-graphic.png?v=' + Date.now() + '" alt="Theme">');</script>
       </div>
     </aside>
   </main>
   </div>
 
-  <script src="config.js"></script>
-  <script src="script.js"></script>
+  <script>
+    document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
+    document.write('<script src="script.js?v=' + Date.now() + '"><\/script>');
+  </script>
 </body>
 </html>

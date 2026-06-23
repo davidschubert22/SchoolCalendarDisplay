@@ -2,10 +2,21 @@
   const cfg = window.CALENDAR_CONFIG || {};
   const tz = cfg.TIME_ZONE || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  // Returns the current date, or a fixed override when DEV_DATE is set.
+  // A ?date=YYYY-MM-DD param in the URL previews that date without touching
+  // config.js; falls back to DEV_DATE, then the real date.
+  function urlDateOverride() {
+    const raw = new URLSearchParams(window.location.search).get('date');
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d) ? null : d;
+  }
+
+  const dateOverride = urlDateOverride() || (cfg.DEV_DATE ? new Date(cfg.DEV_DATE) : null);
+
+  // Returns the current date, or a fixed override when previewing.
   // Clock always uses real time regardless.
   function now() {
-    return cfg.DEV_DATE ? new Date(cfg.DEV_DATE) : new Date();
+    return dateOverride || new Date();
   }
 
   const elTitle    = document.getElementById('board-title');
@@ -41,13 +52,45 @@
     }
 
     const elVideo = document.getElementById('background-video');
-    if (chosen?.bg) {
-      elVideo.src = chosen.bg;
-      elVideo.load();
+    const elDebug = document.getElementById('video-debug');
+
+    // TEMPORARY: on-screen diagnostics for the Fire Stick/Fully Kiosk
+    // "video background is absent" issue. Remove this block (and the
+    // #video-debug div/CSS) once that's resolved.
+    const READY = ['HAVE_NOTHING', 'HAVE_METADATA', 'HAVE_CURRENT_DATA', 'HAVE_FUTURE_DATA', 'HAVE_ENOUGH_DATA'];
+    const NETWORK = ['NETWORK_EMPTY', 'NETWORK_IDLE', 'NETWORK_LOADING', 'NETWORK_NO_SOURCE'];
+    const MEDIA_ERR = ['', 'MEDIA_ERR_ABORTED', 'MEDIA_ERR_NETWORK', 'MEDIA_ERR_DECODE', 'MEDIA_ERR_SRC_NOT_SUPPORTED'];
+    let playRejection = '';
+    function logVideoDebug() {
+      if (!elDebug) return;
+      const err = elVideo.error;
+      elDebug.textContent = [
+        `src: ${elVideo.currentSrc || '(none)'}`,
+        `readyState: ${READY[elVideo.readyState] ?? elVideo.readyState}`,
+        `networkState: ${NETWORK[elVideo.networkState] ?? elVideo.networkState}`,
+        `videoWidth x videoHeight: ${elVideo.videoWidth}x${elVideo.videoHeight}`,
+        `paused: ${elVideo.paused}  muted: ${elVideo.muted}`,
+        `error: ${err ? `${MEDIA_ERR[err.code] || err.code} - ${err.message || ''}` : 'none'}`,
+        `canPlayType h264: ${elVideo.canPlayType('video/mp4; codecs="avc1.640028"') || '(empty = no)'}`,
+        playRejection ? `play() rejected: ${playRejection}` : null,
+      ].filter(Boolean).join('\n');
     }
-    elVideo.addEventListener('error', () => {
-      elVideo.style.display = 'none';
-    }, { once: true });
+
+    if (chosen?.bg) {
+      elVideo.src = chosen.bg + '?v=' + Date.now();
+      elVideo.load();
+      const playPromise = elVideo.play();
+      if (playPromise?.catch) {
+        playPromise.catch(e => {
+          playRejection = `${e.name}: ${e.message}`;
+          logVideoDebug();
+        });
+      }
+    }
+    ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'playing', 'stalled', 'suspend', 'abort', 'emptied', 'error']
+      .forEach(evt => elVideo.addEventListener(evt, logVideoDebug));
+    setInterval(logVideoDebug, 1000);
+    logVideoDebug();
   }
 
   // ── Clock ─────────────────────────────────────────────────────────────────
@@ -265,6 +308,13 @@
     return dayEl;
   }
 
+  function renderEmptyWeek(container) {
+    const p = document.createElement('p');
+    p.className = 'empty-week';
+    p.textContent = 'No events have been added to the calendar yet.';
+    container.appendChild(p);
+  }
+
   function renderNow(list) {
     elNowWrap.innerHTML = '';
     if (!list.length) { elNow.classList.add('hidden'); return; }
@@ -320,6 +370,7 @@
       const el = renderDayCard(day, current);
       if (el) daysWrap.appendChild(el);
     });
+    if (!daysWrap.children.length) renderEmptyWeek(daysWrap);
 
     // Next week
     if (cfg.SHOW_NEXT_WEEK) {
@@ -327,12 +378,12 @@
       const ne = addDays(e, 7);
       const nextSection = document.getElementById('next-week');
       nextDaysWrap.innerHTML = '';
-      let any = false;
       eventsByDay(filterRange(events, ns, ne), ns).forEach(day => {
         const el = renderDayCard(day, current);
-        if (el) { nextDaysWrap.appendChild(el); any = true; }
+        if (el) nextDaysWrap.appendChild(el);
       });
-      nextSection.classList.toggle('hidden', !any);
+      if (!nextDaysWrap.children.length) renderEmptyWeek(nextDaysWrap);
+      nextSection.classList.remove('hidden');
     }
   }
 

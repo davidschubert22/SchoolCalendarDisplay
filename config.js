@@ -6,7 +6,9 @@ window.CALENDAR_CONFIG = {
   // DEV ONLY: override the current date for theme/calendar previewing.
   // Set to any date string recognised by new Date(), e.g. "2025-10-15".
   // Comment out or set to null to use the real date.
-     DEV_DATE: "2026-05-14",
+  // Tip: to preview a date without editing/deploying this file, append
+  // ?date=YYYY-MM-DD to the page URL instead — it takes priority over this.
+  //   DEV_DATE: "2026-05-14",
 
   // Your Cloudflare Worker that fetches the ICS (CORS-safe)
   ICS_URL: "https://red-frost-1be1.dtestechnology.workers.dev/",

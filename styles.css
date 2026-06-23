@@ -44,6 +44,24 @@ html, body {
   background: rgba(0, 0, 0, 0.20);
 }
 
+/* ── Temporary on-screen video diagnostics (remove once the Fire Stick
+   background-video issue is resolved) ── */
+#video-debug {
+  position: fixed;
+  top: 4px;
+  left: 4px;
+  z-index: 9999;
+  max-width: 96vw;
+  padding: 6px 10px;
+  font-family: monospace;
+  font-size: 16px;
+  line-height: 1.4;
+  color: #0f0;
+  background: rgba(0, 0, 0, 0.75);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
 /* ── Fixed-canvas wrapper: always 1920×1080, scaled by JS ── */
 #ui-scale-wrapper {
   position: fixed;
@@ -213,6 +231,20 @@ main.layout {
 .day-card.today {
   outline: 2px solid var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft), 0 6px 20px var(--shadow);
+}
+
+.empty-week {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: fit-content;
+  margin: 0;
+  padding: 14px 22px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--card-bg-soft);
+  border: 1px solid var(--card-border-soft);
+  border-radius: 13px;
 }
 
 .day-header {
