@@ -26,28 +26,13 @@ html, body {
   color: var(--text);
 }
 
-/* ── Full-screen background ──
-   The <video> itself is kept tiny/invisible — it only exists to decode
-   frames. Some Android TV/Fire TV WebViews push hardware-decoded <video>
-   to a hardware overlay surface that never composites with the rest of
-   the page (renders as solid black). #background-canvas is painted from
-   the video's current frame every animation frame instead, which is
-   always normal bitmap content and isn't subject to that bug. */
+/* ── Full-screen background ── */
 #background-video {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 2px;
-  height: 2px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-#background-canvas {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
   z-index: 0;
   filter: saturate(1.08) brightness(0.9);
 }
@@ -57,24 +42,6 @@ html, body {
   inset: 0;
   z-index: 1;
   background: rgba(0, 0, 0, 0.20);
-}
-
-/* ── Temporary on-screen video diagnostics (remove once the Fire Stick
-   background-video issue is resolved) ── */
-#video-debug {
-  position: fixed;
-  top: 4px;
-  left: 4px;
-  z-index: 9999;
-  max-width: 96vw;
-  padding: 6px 10px;
-  font-family: monospace;
-  font-size: 16px;
-  line-height: 1.4;
-  color: #0f0;
-  background: rgba(0, 0, 0, 0.75);
-  white-space: pre-wrap;
-  word-break: break-all;
 }
 
 /* ── Fixed-canvas wrapper: always 1920×1080, scaled by JS ── */
