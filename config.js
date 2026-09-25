@@ -32,7 +32,7 @@ window.CALENDAR_CONFIG = {
 
   // Background behind the theme graphic (bottom-right sidebar box).
   // "dark" matches the clock/header panels; "light" suits graphics with dark text/art.
-  THEME_BOX_BG: "light",
+  THEME_BOX_BG: "dark",
   THEME_GRAPHIC: "assets/theme-graphic.png",
 
   // Frosted-glass blur behind the panels (improves readability over busy
