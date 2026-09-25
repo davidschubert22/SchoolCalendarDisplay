@@ -63,7 +63,7 @@ window.CALENDAR_CONFIG = {
     STATION_API_URL: "",                 // e.g. "https://signage-api.dtestechnology.workers.dev/weather"
     STATION_LABEL: "DeSoto Trail station",
     WEATHERSTEM: {
-      API_KEY: "",
+      API_KEY: "7b5b4a32-ccdb-3b91-36e6-4858689b4217",
       STATION: "wxstemhq@leon.weatherstem.com",
       LABEL: "WeatherSTEM HQ"
     },
