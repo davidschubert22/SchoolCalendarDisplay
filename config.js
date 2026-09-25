@@ -60,7 +60,7 @@ window.CALENDAR_CONFIG = {
   WEATHER: {
     LAT: 30.5395,
     LON: -84.2230,
-    STATION_API_URL: "",                 // e.g. "https://signage-api.dtestechnology.workers.dev/weather"
+    STATION_API_URL: "https://signage-api.dtestechnology.workers.dev/weather",
     STATION_LABEL: "DeSoto Trail station",
     WEATHERSTEM: {
       API_KEY: "7b5b4a32-ccdb-3b91-36e6-4858689b4217",
@@ -74,7 +74,7 @@ window.CALENDAR_CONFIG = {
   // Reliability
   UPDATE_CHECK_MINUTES: 5,   // reload automatically when the site's code/config changes on GitHub
   NIGHTLY_RELOAD: "03:00",   // full page reload once a day (24h, local to TIME_ZONE); "" to disable
-  HEARTBEAT_URL: "",         // e.g. "https://signage-api.dtestechnology.workers.dev/heartbeat"
+  HEARTBEAT_URL: "https://signage-api.dtestechnology.workers.dev/heartbeat",
   HEARTBEAT_MINUTES: 15,
 
   // Background video (and matching poster image) by month. Pick videos that
