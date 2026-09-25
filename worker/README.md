@@ -19,13 +19,19 @@ Tallahassee Airport observation, and there's no status page.
    Then go to the Worker → **Settings → Bindings → Add → KV namespace**:
    variable name `SCREENS`, namespace `signage-screens`.
 4. Worker → **Settings → Variables and Secrets**:
-   - `WL_API_KEY` (Secret) and `WL_API_SECRET` (Secret): on weatherlink.com,
-     go to **Account → Generate v2 Key**.
+   - `WL_API_KEY` (Secret) and `WL_API_SECRET` (Secret): sign in to
+     weatherlink.com with the account that **owns** the station, go to
+     **Account** (weatherlink.com/account) and click **Generate v2 Key**. The
+     secret is only shown once; clicking the button again replaces it. Free
+     (Basic) accounts can use the API: they get the station's most recent
+     15-minute record, with no history.
    - `WL_STATION_ID` (Text, optional): leave it out to use the first station on
      the account.
    - `STATUS_KEY` (Secret): any long random string.
 5. Check it: open `https://signage-api.<your-subdomain>.workers.dev/weather`.
-   You should see `"ok":true` with `temp_f`.
+   You should see `"ok":true` with `temp_f`. If not, open `/weather?raw=1`
+   to see exactly what WeatherLink returned. Errors include WeatherLink's own
+   message, e.g. a 401 means the key or secret is wrong.
 6. In `config.js`, set:
    ```js
    WEATHER: { ..., STATION_API_URL: "https://signage-api.<your-subdomain>.workers.dev/weather" },
@@ -40,6 +46,5 @@ Tallahassee Airport observation, and there's no status page.
   shows which source is in use.
 - On Workers Free, KV allows 1,000 writes a day. At 15-minute heartbeats that's
   about 10 screens. For more, raise `HEARTBEAT_MINUTES` in `config.js`.
-- On 2026-09-24 the WeatherLink widget showed high/low and barometer, but blank
-  temperature, wind and humidity. The outdoor sensor suite may need attention
-  (battery, or a lost connection to the console).
+- When the outdoor sensors aren't reporting (e.g. overnight), `/weather`
+  returns `"ok":false` and the board uses NWS airport data until they return.

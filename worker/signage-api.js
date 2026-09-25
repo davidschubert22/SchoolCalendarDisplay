@@ -26,7 +26,7 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
     try {
-      if (url.pathname === '/weather' && request.method === 'GET') return await weather(env, ctx);
+      if (url.pathname === '/weather' && request.method === 'GET') return await weather(env, ctx, url.searchParams.has('raw'));
       if (url.pathname === '/heartbeat' && request.method === 'POST') return await heartbeat(request, env);
       if (url.pathname === '/status' && request.method === 'GET') return await status(url, env);
     } catch (err) {
@@ -45,12 +45,12 @@ function json(obj, status = 200, extra = {}) {
 
 // ── Weather ─────────────────────────────────────────────────────────────────
 
-async function weather(env, ctx) {
+async function weather(env, ctx, raw) {
   if (!env.WL_API_KEY || !env.WL_API_SECRET) return json({ ok: false, error: 'WeatherLink keys not configured' }, 503);
 
   const cache = caches.default;
-  const cacheKey = new Request('https://signage-api.internal/weather-v1');
-  const hit = await cache.match(cacheKey);
+  const cacheKey = new Request('https://signage-api.internal/weather-v2');
+  const hit = !raw && await cache.match(cacheKey);
   if (hit) return hit;
 
   const headers = { 'X-Api-Secret': env.WL_API_SECRET };
@@ -59,15 +59,18 @@ async function weather(env, ctx) {
   let stationId = env.WL_STATION_ID;
   if (!stationId) {
     const r = await fetch(`https://api.weatherlink.com/v2/stations?api-key=${key}`, { headers });
-    if (!r.ok) throw new Error('WeatherLink stations: HTTP ' + r.status);
+    if (!r.ok) throw new Error('WeatherLink stations: HTTP ' + r.status + ' ' + (await r.text()).slice(0, 200));
     const s = await r.json();
     stationId = s.stations && s.stations[0] && s.stations[0].station_id;
     if (!stationId) throw new Error('No stations on this WeatherLink account');
   }
 
   const r = await fetch(`https://api.weatherlink.com/v2/current/${stationId}?api-key=${key}`, { headers });
-  if (!r.ok) throw new Error('WeatherLink current: HTTP ' + r.status);
-  const body = normalize(await r.json());
+  if (!r.ok) throw new Error('WeatherLink current: HTTP ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  const data = await r.json();
+  // /weather?raw=1 shows exactly what WeatherLink sent (for troubleshooting).
+  if (raw) return json({ station_id: stationId, normalized: normalize(data), raw: data });
+  const body = normalize(data);
 
   const res = json(body, 200, { 'Cache-Control': 'public, max-age=120' });
   ctx.waitUntil(cache.put(cacheKey, res.clone()));
@@ -75,11 +78,15 @@ async function weather(env, ctx) {
 }
 
 // WeatherLink returns one record per sensor, with field names that vary by
-// hardware generation. Take the first outdoor value found for each field.
+// hardware generation and by subscription (free "Basic" accounts get the
+// latest 15-minute archive record, which uses names like temp_last / temp_avg).
+// Prefer the outdoor record, i.e. the one carrying an outdoor temperature.
+const TEMP_FIELDS = ['temp', 'temp_out', 'temp_last', 'temp_avg'];
+
 function normalize(data) {
-  const records = (data.sensors || [])
-    .flatMap(s => (s.data || []).map(d => d))
-    .filter(Boolean);
+  const all = (data.sensors || []).flatMap(s => s.data || []).filter(Boolean);
+  const outdoor = all.find(rec => TEMP_FIELDS.some(n => rec[n] != null));
+  const records = outdoor ? [outdoor, ...all.filter(r => r !== outdoor)] : all;
 
   const pick = (...names) => {
     for (const rec of records) {
@@ -90,9 +97,9 @@ function normalize(data) {
     return null;
   };
 
-  const temp = pick('temp', 'temp_out');
-  const heat = pick('heat_index', 'heat_index_out');
-  const chill = pick('wind_chill');
+  const temp = pick(...TEMP_FIELDS);
+  const heat = pick('heat_index', 'heat_index_out', 'heat_index_last');
+  const chill = pick('wind_chill', 'wind_chill_last');
   let feels = null;
   if (temp != null) {
     if (heat != null && heat > temp) feels = heat;
@@ -102,14 +109,14 @@ function normalize(data) {
 
   return {
     ok: temp != null,
-    ts: pick('ts') || Math.floor(Date.now() / 1000),
+    ts: (outdoor && outdoor.ts) || Math.floor(Date.now() / 1000),
     temp_f: temp,
     feels_f: feels,
-    hum: pick('hum', 'hum_out'),
-    dew_point_f: pick('dew_point'),
-    wind_mph: pick('wind_speed_last', 'wind_speed_avg_last_1_min', 'wind_speed'),
-    wind_dir_deg: pick('wind_dir_last', 'wind_dir_scalar_avg_last_1_min', 'wind_dir'),
-    gust_mph: pick('wind_speed_hi_last_10_min', 'wind_gust_10_min'),
+    hum: pick('hum', 'hum_out', 'hum_last', 'hum_avg'),
+    dew_point_f: pick('dew_point', 'dew_point_last'),
+    wind_mph: pick('wind_speed_last', 'wind_speed_avg_last_1_min', 'wind_speed', 'wind_speed_avg'),
+    wind_dir_deg: pick('wind_dir_last', 'wind_dir_scalar_avg_last_1_min', 'wind_dir', 'wind_dir_of_prevail'),
+    gust_mph: pick('wind_speed_hi_last_10_min', 'wind_gust_10_min', 'wind_speed_hi'),
     rain_day_in: pick('rainfall_daily_in', 'rain_day_in'),
     rain_rate_in: pick('rain_rate_last_in', 'rain_rate_in'),
     bar_in: pick('bar_sea_level', 'bar'),
