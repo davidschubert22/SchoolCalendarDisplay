@@ -94,7 +94,7 @@ appear within about 5–15 minutes. Each entry:
 - **`red-frost-1be1` Worker** (existing) fetches the ICS calendar, which gets
   around CORS.
 - **`signage-api` Worker** (optional, new) handles current conditions (school
-  WeatherLink station, then WCTV WeatherSTEM), the heartbeat and the status
+  WeatherLink station, then WeatherSTEM HQ), the heartbeat and the status
   page. See [`worker/README.md`](worker/README.md).
 
 ## Kiosk PCs

@@ -13,7 +13,7 @@
 //   WL_API_SECRET  (secret)  WeatherLink v2 API secret
 //   WL_STATION_ID  (text)    optional; the first station on the account is used if blank
 //   WS_API_KEY     (secret)  WeatherSTEM API key (from your weatherstem.com account)
-//   WS_STATION     (text)    optional; default "wctv@leon.weatherstem.com"
+//   WS_STATION     (text)    optional; default "wxstemhq@leon.weatherstem.com"
 //   STATUS_KEY     (secret)  any password-like string, required to view /status
 // Bindings:
 //   SCREENS        KV namespace (for /heartbeat and /status)
@@ -109,7 +109,7 @@ async function weatherLink(env) {
 //   { sensor_type: "Thermometer", value: "78.1", unit_symbol: "°F" }, ... ] } }]
 
 async function weatherStem(env) {
-  const station = env.WS_STATION || 'wctv@leon.weatherstem.com';
+  const station = env.WS_STATION || 'wxstemhq@leon.weatherstem.com';
   const r = await fetch('https://api.weatherstem.com/api', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

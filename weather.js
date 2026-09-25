@@ -5,7 +5,7 @@
 // Sources
 //   Forecast + alerts: api.weather.gov (NWS, free, no key, CORS-enabled)
 //   Current:           the signage-api Worker when WEATHER.STATION_API_URL is set
-//                      (school WeatherLink station, else WCTV WeatherSTEM),
+//                      (school WeatherLink station, else WeatherSTEM HQ),
 //                      otherwise the latest NWS observation from WEATHER.NWS_STATION.
 (function () {
   'use strict';

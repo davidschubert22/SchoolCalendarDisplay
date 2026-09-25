@@ -4,7 +4,7 @@ This Worker is optional. It is separate from the existing ICS Worker
 (`red-frost-1be1`), which it doesn't touch. It provides:
 
 - `GET /weather`: current conditions from the school's WeatherLink station,
-  or WCTV's WeatherSTEM station (about 3 miles away) when the school's isn't
+  or the WeatherSTEM headquarters station on Shannon Lakes N when the school's isn't
   reporting. The API keys stay in the Worker instead of the public page.
 - `POST /heartbeat`: every screen checks in every 15 minutes.
 - `GET /status?key=…`: a page listing each screen and when it last checked in.
@@ -28,10 +28,14 @@ Tallahassee Airport observation, and there's no status page.
      15-minute record, with no history.
    - `WL_STATION_ID` (Text, optional): leave it out to use the first station on
      the account. You don't need the v1 API token.
-   - `WS_API_KEY` (Secret): your WeatherSTEM API key. Register at
-     weatherstem.com; the key is on your account page. Leave it out to skip
+   - `WS_API_KEY` (Secret): a WeatherSTEM API key. This uses WeatherSTEM's
+     v1 (JSON) API; their newer "API V2" is a browser widget library that a
+     Worker can't use. Try a key from the **My API V2 Keys** tab at
+     weatherstem.com/apiv2_docs first. If `/weather?raw=1` reports "You do not
+     have access to this feature", email api@weatherstem.com and ask for v1
+     API access for a school's digital signage. Leave it out to skip
      WeatherSTEM.
-   - `WS_STATION` (Text, optional): defaults to `wctv@leon.weatherstem.com`.
+   - `WS_STATION` (Text, optional): defaults to `wxstemhq@leon.weatherstem.com`.
 
    **Never put these keys in `config.js`.** It's published on GitHub Pages
    for anyone to read. Secrets set here are encrypted, and even you can't
@@ -58,4 +62,4 @@ Tallahassee Airport observation, and there's no status page.
 - On Workers Free, KV allows 1,000 writes a day. At 15-minute heartbeats that's
   about 10 screens. For more, raise `HEARTBEAT_MINUTES` in `config.js`.
 - The school station currently drops out overnight (probably the outdoor
-  unit's backup battery). WCTV covers those hours automatically.
+  unit's backup battery). The WeatherSTEM station covers those hours automatically.
