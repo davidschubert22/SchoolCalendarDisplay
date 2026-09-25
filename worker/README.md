@@ -3,8 +3,9 @@
 This Worker is optional. It is separate from the existing ICS Worker
 (`red-frost-1be1`), which it doesn't touch. It provides:
 
-- `GET /weather`: current conditions from the school's WeatherLink station.
-  The API secret stays in the Worker instead of the public page.
+- `GET /weather`: current conditions from the school's WeatherLink station,
+  or WCTV's WeatherSTEM station (about 3 miles away) when the school's isn't
+  reporting. The API keys stay in the Worker instead of the public page.
 - `POST /heartbeat`: every screen checks in every 15 minutes.
 - `GET /status?key=…`: a page listing each screen and when it last checked in.
 
@@ -26,11 +27,20 @@ Tallahassee Airport observation, and there's no status page.
      (Basic) accounts can use the API: they get the station's most recent
      15-minute record, with no history.
    - `WL_STATION_ID` (Text, optional): leave it out to use the first station on
-     the account.
+     the account. You don't need the v1 API token.
+   - `WS_API_KEY` (Secret): your WeatherSTEM API key. Register at
+     weatherstem.com; the key is on your account page. Leave it out to skip
+     WeatherSTEM.
+   - `WS_STATION` (Text, optional): defaults to `wctv@leon.weatherstem.com`.
+
+   **Never put these keys in `config.js`.** It's published on GitHub Pages
+   for anyone to read. Secrets set here are encrypted, and even you can't
+   view them again in the dashboard.
    - `STATUS_KEY` (Secret): any long random string.
 5. Check it: open `https://signage-api.<your-subdomain>.workers.dev/weather`.
-   You should see `"ok":true` with `temp_f`. If not, open `/weather?raw=1`
-   to see exactly what WeatherLink returned. Errors include WeatherLink's own
+   You should see `"ok":true`, `temp_f`, and `"source"` (weatherlink or
+   weatherstem). `notes` explains any source that was skipped. If something
+   is wrong, open `/weather?raw=1` to see exactly what each service returned. Errors include WeatherLink's own
    message, e.g. a 401 means the key or secret is wrong.
 6. In `config.js`, set:
    ```js
@@ -41,10 +51,11 @@ Tallahassee Airport observation, and there's no status page.
 
 ## Notes
 
-- If the station hasn't reported for 30 minutes, or temperature is missing,
-  the board falls back to NWS observations automatically. The panel footer
-  shows which source is in use.
+- Fallback order: WeatherLink, then WeatherSTEM, then NWS Tallahassee
+  Airport (which the board fetches itself if the Worker has nothing). A source
+  is skipped if its reading is older than 30 minutes or has no temperature.
+  The panel footer shows which source is in use.
 - On Workers Free, KV allows 1,000 writes a day. At 15-minute heartbeats that's
   about 10 screens. For more, raise `HEARTBEAT_MINUTES` in `config.js`.
-- When the outdoor sensors aren't reporting (e.g. overnight), `/weather`
-  returns `"ok":false` and the board uses NWS airport data until they return.
+- The school station currently drops out overnight (probably the outdoor
+  unit's backup battery). WCTV covers those hours automatically.

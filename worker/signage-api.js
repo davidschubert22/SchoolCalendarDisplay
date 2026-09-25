@@ -1,7 +1,9 @@
 // signage-api — Cloudflare Worker for the DTES signage board.
 //
-//   GET  /weather    Current conditions from the school's WeatherLink station,
-//                    normalized to a small JSON object. Cached for 2 minutes.
+//   GET  /weather    Current conditions, normalized to a small JSON object and
+//                    cached for 2 minutes. Tries the school's WeatherLink station
+//                    first, then a nearby WeatherSTEM station; "source" says which.
+//                    Add ?raw=1 to see what each service actually returned.
 //   POST /heartbeat  Each screen checks in every 15 minutes (stored in KV).
 //   GET  /status?key=STATUS_KEY
 //                    Table of screens and when each last checked in.
@@ -10,6 +12,8 @@
 //   WL_API_KEY     (secret)  WeatherLink v2 API key
 //   WL_API_SECRET  (secret)  WeatherLink v2 API secret
 //   WL_STATION_ID  (text)    optional; the first station on the account is used if blank
+//   WS_API_KEY     (secret)  WeatherSTEM API key (from your weatherstem.com account)
+//   WS_STATION     (text)    optional; default "wctv@leon.weatherstem.com"
 //   STATUS_KEY     (secret)  any password-like string, required to view /status
 // Bindings:
 //   SCREENS        KV namespace (for /heartbeat and /status)
@@ -45,36 +49,142 @@ function json(obj, status = 200, extra = {}) {
 
 // ── Weather ─────────────────────────────────────────────────────────────────
 
-async function weather(env, ctx, raw) {
-  if (!env.WL_API_KEY || !env.WL_API_SECRET) return json({ ok: false, error: 'WeatherLink keys not configured' }, 503);
+const MAX_AGE_S = 30 * 60; // a reading older than this counts as "not reporting"
 
+async function weather(env, ctx, raw) {
   const cache = caches.default;
-  const cacheKey = new Request('https://signage-api.internal/weather-v2');
+  const cacheKey = new Request('https://signage-api.internal/weather-v3');
   const hit = !raw && await cache.match(cacheKey);
   if (hit) return hit;
 
+  const sources = [];
+  if (env.WL_API_KEY && env.WL_API_SECRET) sources.push(['weatherlink', weatherLink]);
+  if (env.WS_API_KEY) sources.push(['weatherstem', weatherStem]);
+  if (!sources.length) return json({ ok: false, error: 'No weather sources configured' }, 503);
+
+  const notes = [], rawOut = {};
+  let result = null;
+  for (const [name, load] of sources) {
+    try {
+      const { normalized, data } = await load(env);
+      if (raw) rawOut[name] = { normalized, raw: data };
+      const age = Math.floor(Date.now() / 1000) - normalized.ts;
+      if (!normalized.ok) notes.push(name + ': no outdoor temperature');
+      else if (age > MAX_AGE_S) notes.push(name + ': last reading ' + Math.round(age / 60) + ' min old');
+      else if (!result) result = Object.assign({ source: name }, normalized);
+    } catch (err) {
+      notes.push(name + ': ' + String(err && err.message || err));
+    }
+    if (result && !raw) break;
+  }
+
+  if (raw) return json({ chosen: result, notes, sources: rawOut });
+  const body = result ? Object.assign(result, { notes }) : { ok: false, notes };
+  const res = json(body, 200, { 'Cache-Control': 'public, max-age=120' });
+  ctx.waitUntil(cache.put(cacheKey, res.clone()));
+  return res;
+}
+
+async function weatherLink(env) {
   const headers = { 'X-Api-Secret': env.WL_API_SECRET };
   const key = encodeURIComponent(env.WL_API_KEY);
 
   let stationId = env.WL_STATION_ID;
   if (!stationId) {
     const r = await fetch(`https://api.weatherlink.com/v2/stations?api-key=${key}`, { headers });
-    if (!r.ok) throw new Error('WeatherLink stations: HTTP ' + r.status + ' ' + (await r.text()).slice(0, 200));
+    if (!r.ok) throw new Error('stations HTTP ' + r.status + ' ' + (await r.text()).slice(0, 200));
     const s = await r.json();
     stationId = s.stations && s.stations[0] && s.stations[0].station_id;
-    if (!stationId) throw new Error('No stations on this WeatherLink account');
+    if (!stationId) throw new Error('no stations on this account');
   }
 
   const r = await fetch(`https://api.weatherlink.com/v2/current/${stationId}?api-key=${key}`, { headers });
-  if (!r.ok) throw new Error('WeatherLink current: HTTP ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  if (!r.ok) throw new Error('current HTTP ' + r.status + ' ' + (await r.text()).slice(0, 200));
   const data = await r.json();
-  // /weather?raw=1 shows exactly what WeatherLink sent (for troubleshooting).
-  if (raw) return json({ station_id: stationId, normalized: normalize(data), raw: data });
-  const body = normalize(data);
+  return { normalized: normalize(data), data };
+}
 
-  const res = json(body, 200, { 'Cache-Control': 'public, max-age=120' });
-  ctx.waitUntil(cache.put(cacheKey, res.clone()));
-  return res;
+// ── WeatherSTEM ──
+// Response: [{ station: {...}, record: { time, down_since, readings: [
+//   { sensor_type: "Thermometer", value: "78.1", unit_symbol: "°F" }, ... ] } }]
+
+async function weatherStem(env) {
+  const station = env.WS_STATION || 'wctv@leon.weatherstem.com';
+  const r = await fetch('https://api.weatherstem.com/api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: env.WS_API_KEY, stations: [station] })
+  });
+  const text = await r.text();
+  if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + text.slice(0, 200));
+  let data;
+  try { data = JSON.parse(text); } catch (e) { throw new Error('unexpected response: ' + text.slice(0, 200)); }
+  if (data && data.error) throw new Error(data.error);
+  return { normalized: normalizeStem(Array.isArray(data) ? data[0] : data), data };
+}
+
+function normalizeStem(entry) {
+  const rec = (entry && entry.record) || {};
+  const readings = rec.readings || [];
+  const read = type => {
+    const x = readings.find(v => String(v.sensor_type).toLowerCase() === type.toLowerCase());
+    if (!x || x.value === '' || x.value == null) return null;
+    const n = parseFloat(x.value);
+    return isNaN(n) ? null : { n, unit: String(x.unit_symbol || x.unit || '').toLowerCase() };
+  };
+  const toF = v => v == null ? null : (/c/.test(v.unit) && !/f/.test(v.unit) ? v.n * 9 / 5 + 32 : v.n);
+  const toMph = v => {
+    if (v == null) return null;
+    if (/km/.test(v.unit)) return v.n * 0.621371;
+    if (/m\/s/.test(v.unit)) return v.n * 2.23694;
+    if (/kt|knot/.test(v.unit)) return v.n * 1.15078;
+    return v.n;
+  };
+
+  const temp = toF(read('Thermometer'));
+  const heat = toF(read('Heat Index'));
+  const chill = toF(read('Wind Chill'));
+  let feels = temp;
+  if (temp != null && heat != null && heat > temp) feels = heat;
+  else if (temp != null && chill != null && chill < temp) feels = chill;
+  const hum = read('Hygrometer');
+  const dir = read('Wind Vane');
+  const bar = read('Barometer');
+
+  return {
+    ok: temp != null && !rec.down_since,
+    ts: parseStemTime(rec.time) || Math.floor(Date.now() / 1000),
+    temp_f: temp,
+    feels_f: feels,
+    hum: hum && hum.n,
+    dew_point_f: toF(read('Dewpoint')),
+    wind_mph: toMph(read('Anemometer')),
+    wind_dir_deg: dir && dir.n,
+    gust_mph: toMph(read('10 Minute Wind Gust')),
+    rain_day_in: null, // WeatherSTEM's rain gauge total isn't reliably "today"
+    rain_rate_in: null,
+    bar_in: bar && bar.n,
+    bar_trend: null
+  };
+}
+
+// WeatherSTEM times look like "2026-09-24 14:05:00" in the station's local
+// (Eastern) time; ISO strings with an offset are accepted too.
+function parseStemTime(v) {
+  if (!v) return null;
+  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(v)) {
+    const t = Date.parse(v);
+    return isNaN(t) ? null : Math.floor(t / 1000);
+  }
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(v);
+  if (!m) return null;
+  const asUTC = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+  // Offset of America/New_York at that moment, via Intl.
+  const f = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hourCycle: 'h23',
+    year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+  const p = Object.fromEntries(f.formatToParts(new Date(asUTC)).map(x => [x.type, +x.value]));
+  const offset = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - asUTC;
+  return Math.floor((asUTC - offset) / 1000);
 }
 
 // WeatherLink returns one record per sensor, with field names that vary by

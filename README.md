@@ -93,8 +93,9 @@ appear within about 5–15 minutes. Each entry:
 - **GitHub Pages** hosts the board.
 - **`red-frost-1be1` Worker** (existing) fetches the ICS calendar, which gets
   around CORS.
-- **`signage-api` Worker** (optional, new) handles the school WeatherLink
-  station, heartbeat and status page. See [`worker/README.md`](worker/README.md).
+- **`signage-api` Worker** (optional, new) handles current conditions (school
+  WeatherLink station, then WCTV WeatherSTEM), the heartbeat and the status
+  page. See [`worker/README.md`](worker/README.md).
 
 ## Kiosk PCs
 

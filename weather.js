@@ -4,9 +4,9 @@
 //
 // Sources
 //   Forecast + alerts: api.weather.gov (NWS, free, no key, CORS-enabled)
-//   Current:           the signage-api Worker (school WeatherLink station) when
-//                      WEATHER.STATION_API_URL is set and reporting, otherwise
-//                      the latest NWS observation from WEATHER.NWS_STATION.
+//   Current:           the signage-api Worker when WEATHER.STATION_API_URL is set
+//                      (school WeatherLink station, else WCTV WeatherSTEM),
+//                      otherwise the latest NWS observation from WEATHER.NWS_STATION.
 (function () {
   'use strict';
 
@@ -166,7 +166,7 @@
     if (!j || !j.ok || j.temp_f == null) return null;
     if (Date.now() - j.ts * 1000 > 30 * 60000) return null; // station hasn't reported recently
     return {
-      source: W.STATION_LABEL || 'School station',
+      source: (W.SOURCE_LABELS || {})[j.source] || j.source || 'Station',
       at: new Date(j.ts * 1000),
       temp: j.temp_f,
       feels: j.feels_f,
