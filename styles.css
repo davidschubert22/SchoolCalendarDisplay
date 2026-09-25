@@ -651,6 +651,8 @@ main.layout {
 
 /* ── Theme graphic: sized by the image's own shape ── */
 .theme-box {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   flex-shrink: 0;
   padding: 14px;
   background: var(--card-bg);
@@ -667,10 +669,13 @@ main.layout {
   object-fit: contain;
 }
 
+/* Frosted white: the artwork is dark crimson, which needs a light backdrop
+   (about 6:1 contrast, vs. 2.5:1 on the dark glass). */
 .theme-box.light-bg {
-  background: rgba(255, 255, 255, 0.75);
-  border-color: rgba(15, 23, 42, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.55);
 }
+body.no-blur .theme-box.light-bg { background: rgba(255, 255, 255, 0.86); }
 
 /* ── Utility ── */
 .hidden { display: none !important; }
