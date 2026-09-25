@@ -5,65 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <title>Weekly Events Display</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <script>document.write('<link rel="stylesheet" href="styles.css?v=' + Date.now() + '">');</script>
+  <link rel="preload" href="assets/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <video id="background-video" autoplay muted loop playsinline></video>
   <div id="scrim"></div>
 
-<div id="ui-scale-wrapper">
-  <main class="layout">
-    <div class="content">
-      <header class="topbar">
-        <div class="title">
-          <script>document.write('<img id="logo" src="assets/logo.png?v=' + Date.now() + '" alt="Logo">');</script>
-          <div class="titlestack">
-            <h1 id="board-title"></h1>
-            <p class="subtitle" id="date-range"></p>
+  <div id="ui-scale-wrapper">
+    <main class="layout">
+      <div class="content">
+        <header class="topbar">
+          <div class="title">
+            <img id="logo" src="assets/logo.png" alt="Logo">
+            <div class="titlestack">
+              <h1 id="board-title"></h1>
+              <p class="subtitle" id="date-range"></p>
+            </div>
           </div>
-        </div>
-      </header>
+          <div class="countdown hidden" id="countdown"></div>
+        </header>
 
-      <div class="scroll-viewport" id="scroll-viewport">
-        <div class="scroll-track" id="scroll-track">
-          <section id="now" class="now hidden">
-            <div class="section-title-box"><h2 class="section-title">Happening Now</h2></div>
-            <div class="now-wrap" id="now-wrap"></div>
-          </section>
+        <div class="scroll-viewport" id="scroll-viewport"></div>
 
-          <section id="this-week" class="week">
-            <div class="section-title-box"><h2 class="section-title">This Week</h2></div>
-            <div id="days" class="day-grid"></div>
-          </section>
-
-          <section id="next-week" class="week hidden">
-            <div class="section-title-box"><h2 class="section-title">Next Week</h2></div>
-            <div id="next-days" class="day-grid"></div>
-          </section>
+        <div class="announce hidden" id="announce">
+          <svg class="announce-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4a1 1 0 0 0 1 1h2l5 4V5L6 9H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+          <div class="announce-body" id="announce-body"></div>
+          <div class="announce-dots" id="announce-dots"></div>
         </div>
       </div>
-    </div>
 
-    <aside class="sidebar">
-      <div class="clockbox">
-        <div class="clock" id="clock"></div>
-      </div>
-      <div class="weather-wrap">
-        <iframe class="weather" title="Weather" src="" loading="lazy"></iframe>
-      </div>
-      <div class="theme-box">
-        <script>document.write('<img class="theme-image" src="assets/theme-graphic.png?v=' + Date.now() + '" alt="Theme">');</script>
-      </div>
-    </aside>
-  </main>
+      <aside class="sidebar">
+        <div class="clockbox">
+          <div class="clock" id="clock"></div>
+        </div>
+        <div class="weather-panel" id="weather"></div>
+        <div class="theme-box" id="theme-box">
+          <img class="theme-image" id="theme-image" alt="Theme">
+        </div>
+      </aside>
+
+      <div class="status" id="status"></div>
+    </main>
   </div>
 
-  <script>
-    document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
-    document.write('<script src="script.js?v=' + Date.now() + '"><\/script>');
-  </script>
+  <script src="config.js"></script>
+  <script src="ics.js"></script>
+  <script src="weather.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

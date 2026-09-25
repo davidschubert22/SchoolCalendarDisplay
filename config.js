@@ -1,96 +1,87 @@
-
 // === Configuration ===
 window.CALENDAR_CONFIG = {
   TITLE: "Welcome to DeSoto Trail Elementary",
 
-  // DEV ONLY: override the current date for theme/calendar previewing.
-  // Set to any date string recognised by new Date(), e.g. "2025-10-15".
-  // Comment out or set to null to use the real date.
-  // Tip: to preview a date without editing/deploying this file, append
-  // ?date=YYYY-MM-DD to the page URL instead — it takes priority over this.
-  //   DEV_DATE: "2026-05-14",
+  // PREVIEWING: append ?date=YYYY-MM-DD (or ?date=YYYY-MM-DDTHH:MM) to the
+  // page URL to see the board as it will look at that moment. A date alone
+  // means 9:00 AM that day. The board keeps ticking forward from there.
+  // DEV_DATE does the same from here; leave it commented out in production.
+  //   DEV_DATE: "2026-11-23",
 
   // Your Cloudflare Worker that fetches the ICS (CORS-safe)
   ICS_URL: "https://red-frost-1be1.dtestechnology.workers.dev/",
 
-  // Force all date/time rendering to Eastern
+  // All calendar math and display happen in this zone, whatever the PC's
+  // own time zone is set to.
   TIME_ZONE: "America/New_York",
 
-  WEEK_START_DAY: 0,       // 0 = Sunday, 1 = Monday
-  REFRESH_MINUTES: 15,     // auto-refresh ICS fetch
-  SHOW_DESCRIPTION: false, // toggle if you want long text shown on cards
-  MAX_EVENTS: 30,
+  WEEK_START_DAY: 0,          // 0 = Sunday, 1 = Monday (only affects which weekend days group with which week)
+  SCHOOL_DAYS: [1, 2, 3, 4, 5], // columns always shown (0 = Sun … 6 = Sat); weekend columns appear only when they have events
+  REFRESH_MINUTES: 15,        // calendar re-fetch interval
+  SHOW_DESCRIPTION: false,    // show event descriptions on cards
   SHOW_NEXT_WEEK: true,
+  NOW_INCLUDE_ALL_DAY: false, // "Happening Now" lists timed events in progress; true adds all-day ones too
+
+  // Countdown chip in the header, e.g. "12 school days until Thanksgiving Break".
+  // COUNTDOWN_MATCH picks which events get counted down to; NO_SCHOOL_MATCH
+  // marks days that don't count as school days. Both are case-insensitive
+  // regular expressions tested against event titles. Set COUNTDOWN_MAX_DAYS
+  // to 0 to turn the countdown off.
+  COUNTDOWN_MATCH: "no school|break|last day of school",
+  NO_SCHOOL_MATCH: "no school|break",
+  COUNTDOWN_MAX_DAYS: 30,
 
   // Background behind the theme graphic (bottom-right sidebar box).
-  // "dark" (default) matches the clock/header panels. Switch to "light" if
-  // theme-graphic.png has dark text/art that needs a light backdrop instead.
+  // "dark" matches the clock/header panels; "light" suits graphics with dark text/art.
   THEME_BOX_BG: "light",
+  THEME_GRAPHIC: "assets/theme-graphic.png",
 
-  // Auto-scroll for the area below the header (Happening Now / This Week /
-  // Next Week). Only kicks in when that content is taller than the visible
-  // space. How long it sits still at the top/bottom of each pass, and how
-  // fast it scrolls between them (the on-screen duration adapts to however
-  // much content needs to be revealed, always at this same speed).
-  SCROLL_PAUSE_MS: 20000,
+  // When This Week + Next Week don't fit on screen together, the board
+  // alternates between them. PAGE_SECONDS is how long each one stays up.
+  // If a single week is still too tall, it scrolls slowly within its turn.
+  PAGE_SECONDS: 20,
+  SCROLL_PAUSE_MS: 8000,
   SCROLL_SPEED_PX_PER_SEC: 20,
 
-  // WeatherLink embed (unchanged)
-  WEATHER_IFRAME_SRC:
-    "https://www.weatherlink.com/embeddablePage/show/70d6629b55214481b526a8159850212d/slim",
+  // Scheduled announcements, shown in a strip along the bottom.
+  // See announcements.json for the format.
+  ANNOUNCEMENTS_URL: "announcements.json",
+  ANNOUNCEMENT_SECONDS: 10,
 
-  // Background video by month. Panel/text colors are fixed (see styles.css
-  // :root) rather than auto-adapting, so pick videos that read well with a
-  // dark, semi-transparent overlay.
-THEMES: {
-  january: {
-    months: [1],
-    bg: "assets/01-january.mp4"
+  // Weather panel. Forecast, alerts and fallback conditions come from the
+  // National Weather Service (free, no key). If STATION_API_URL is set to the
+  // signage-api Worker's /weather endpoint (see worker/README.md), current
+  // conditions come from the school's own WeatherLink station instead.
+  WEATHER: {
+    LAT: 30.5395,
+    LON: -84.2230,
+    NWS_STATION: "KTLH",                 // fallback observations: Tallahassee airport
+    NWS_STATION_LABEL: "Tallahassee Airport",
+    STATION_API_URL: "",                 // e.g. "https://signage-api.dtestechnology.workers.dev/weather"
+    STATION_LABEL: "DeSoto Trail station"
   },
-  february: {
-    months: [2],
-    bg: "assets/02-february.mp4"
-  },
-  march: {
-    months: [3],
-    bg: "assets/03-march.mp4"
-  },
-  april: {
-    months: [4],
-    bg: "assets/04-april.mp4"
-  },
-  may: {
-    months: [5],
-    bg: "assets/05-may.mp4"
-  },
-  june: {
-    months: [6],
-    bg: "assets/06-june.mp4"
-  },
-  july: {
-    months: [7],
-    bg: "assets/07-july.mp4"
-  },
-  august: {
-    months: [8],
-    bg: "assets/08-august.mp4"
-  },
-  september: {
-    months: [9],
-    bg: "assets/09-september.mp4"
-  },
-  october: {
-    months: [10],
-    bg: "assets/10-october.mp4"
-  },
-  november: {
-    months: [11],
-    bg: "assets/11-november.mp4"
-  },
-  december: {
-    months: [12],
-    bg: "assets/12-december.mp4"
+
+  // Reliability
+  UPDATE_CHECK_MINUTES: 5,   // reload automatically when the site's code/config changes on GitHub
+  NIGHTLY_RELOAD: "03:00",   // full page reload once a day (24h, local to TIME_ZONE); "" to disable
+  HEARTBEAT_URL: "",         // e.g. "https://signage-api.dtestechnology.workers.dev/heartbeat"
+  HEARTBEAT_MINUTES: 15,
+
+  // Background video (and matching poster image) by month. Pick videos that
+  // read well under the dark, semi-transparent panels. If you replace a video,
+  // give it a new filename so screens don't keep playing their cached copy.
+  THEMES: {
+    january:   { months: [1],  bg: "assets/01-january.mp4",   poster: "assets/posters/01-january.jpg" },
+    february:  { months: [2],  bg: "assets/02-february.mp4",  poster: "assets/posters/02-february.jpg" },
+    march:     { months: [3],  bg: "assets/03-march.mp4",     poster: "assets/posters/03-march.jpg" },
+    april:     { months: [4],  bg: "assets/04-april.mp4",     poster: "assets/posters/04-april.jpg" },
+    may:       { months: [5],  bg: "assets/05-may.mp4",       poster: "assets/posters/05-may.jpg" },
+    june:      { months: [6],  bg: "assets/06-june.mp4",      poster: "assets/posters/06-june.jpg" },
+    july:      { months: [7],  bg: "assets/07-july.mp4",      poster: "assets/posters/07-july.jpg" },
+    august:    { months: [8],  bg: "assets/08-august.mp4",    poster: "assets/posters/08-august.jpg" },
+    september: { months: [9],  bg: "assets/09-september.mp4", poster: "assets/posters/09-september.jpg" },
+    october:   { months: [10], bg: "assets/10-october.mp4",   poster: "assets/posters/10-october.jpg" },
+    november:  { months: [11], bg: "assets/11-november.mp4",  poster: "assets/posters/11-november.jpg" },
+    december:  { months: [12], bg: "assets/12-december.mp4",  poster: "assets/posters/12-december.jpg" }
   }
-}
-
 };

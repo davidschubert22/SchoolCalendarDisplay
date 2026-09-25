@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('assets/fonts/inter-latin-wght-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --card-bg: rgba(0, 0, 0, 0.38);
   --card-bg-soft: rgba(0, 0, 0, 0.30);
@@ -13,6 +21,7 @@
   --sidebar-w: 402px;
   --pad: 28px;
   --gap: 18px;
+  --past-opacity: 0.45;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -22,8 +31,9 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: #000;
-  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
+  cursor: none;
 }
 
 /* ── Full-screen background ── */
@@ -35,6 +45,7 @@ html, body {
   object-fit: cover;
   z-index: 0;
   filter: saturate(1.08) brightness(0.9);
+  background: #000 center / cover no-repeat;
 }
 
 #scrim {
@@ -56,14 +67,21 @@ html, body {
   overflow: hidden;
 }
 
-/* ── Two-column layout ── */
 main.layout {
+  position: relative;
   width: 100%;
   height: 100%;
   padding: var(--pad);
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-w);
   gap: var(--gap);
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px var(--shadow);
 }
 
 /* ── Content column ── */
@@ -74,8 +92,6 @@ main.layout {
   overflow: hidden;
 }
 
-/* Fixed-size clipping window below the header; .scroll-track is the part
-   that actually moves, driven by script.js. */
 .scroll-viewport {
   flex: 1;
   min-height: 0;
@@ -83,10 +99,21 @@ main.layout {
   overflow: hidden;
 }
 
-.scroll-track {
+/* Pages stack on top of each other and cross-fade. */
+.page {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  pointer-events: none;
+}
+.page.active { opacity: 1; }
+
+.page-track {
   display: flex;
   flex-direction: column;
-  transition: transform var(--scroll-duration, 0s) linear;
+  gap: 16px;
   will-change: transform;
 }
 
@@ -94,7 +121,8 @@ main.layout {
 .topbar {
   flex-shrink: 0;
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  gap: var(--gap);
   margin-bottom: 18px;
 }
 
@@ -102,43 +130,88 @@ main.layout {
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 14px 26px;
+  padding: 12px 26px 12px 18px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   box-shadow: 0 6px 20px var(--shadow);
+  flex-shrink: 0;
 }
 
 #logo {
-  width: 110px;
-  height: 110px;
+  width: 100px;
+  height: 100px;
   object-fit: contain;
-  border-radius: 10px;
-  padding: 4px;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
 .titlestack h1 {
   margin: 0;
-  font-size: 55px;
+  font-size: 50px;
   font-weight: 800;
   letter-spacing: 0.2px;
   line-height: 1.1;
   text-shadow: var(--text-shadow);
+  white-space: nowrap;
 }
 
 .subtitle {
-  margin: 8px 0 0;
-  font-size: 34px;
+  margin: 6px 0 0;
+  font-size: 32px;
   font-weight: 600;
   color: var(--muted);
+}
+
+/* Countdown chip */
+.countdown {
+  margin-left: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 22px;
+  max-width: 440px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-left: 5px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px var(--shadow);
+}
+
+.countdown-num {
+  font-size: 76px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: var(--text-shadow);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-text { min-width: 0; }
+
+.countdown-lead {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.countdown-label {
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ── Section labels ── */
 .section-title-box {
   display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
+  align-items: baseline;
+  gap: 16px;
+  align-self: flex-start;
   margin-bottom: 10px;
   padding: 10px 22px;
   background: var(--card-bg);
@@ -149,18 +222,21 @@ main.layout {
 
 .section-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 2.5px;
   color: var(--accent);
 }
 
-/* ── Happening Now ── */
-.now {
-  flex-shrink: 0;
-  margin-bottom: 14px;
+.section-range {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--muted);
 }
+
+/* ── Happening Now ── */
+.now, .week { display: flex; flex-direction: column; }
 
 .now-wrap {
   display: flex;
@@ -172,139 +248,255 @@ main.layout {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-left: 5px solid var(--accent);
-  padding: 13px 18px;
+  padding: 12px 20px;
   border-radius: var(--radius);
   box-shadow: 0 6px 20px var(--shadow);
-  min-width: 260px;
+  min-width: 280px;
+  max-width: 100%;
 }
 
 .now-title {
   margin: 0 0 4px;
-  font-size: 33px;
+  font-size: 34px;
   font-weight: 800;
+  line-height: 1.2;
 }
 
-.now-time {
+.now-time, .now-loc {
   margin: 0;
   font-size: 24px;
+  font-weight: 600;
   color: var(--muted);
 }
 
-/* ── Week sections ── */
-.week {
-  flex-shrink: 0;
-  margin-bottom: 14px;
-}
-
-.day-grid {
+/* ── Week grid ──
+   Each day is a column; .day-bg draws the card behind the header, any
+   multi-day bars, and that day's events. Bars span several columns. */
+.week-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 14px;
+  column-gap: 14px;
+  row-gap: 0;
 }
 
-.day-card {
+.day-bg {
   background: var(--card-bg-soft);
   border: 1px solid var(--card-border-soft);
-  border-radius: 13px;
-  padding: 10px 10px 8px;
+  border-radius: 14px;
   box-shadow: 0 6px 20px var(--shadow);
 }
 
-.day-card.today {
-  outline: 2px solid var(--accent);
+.day-bg.today {
+  border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft), 0 6px 20px var(--shadow);
+  background: rgba(0, 0, 0, 0.42);
 }
 
-.empty-week {
-  grid-column: 1 / -1;
-  justify-self: start;
-  width: fit-content;
-  margin: 0;
-  padding: 14px 22px;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--muted);
-  background: var(--card-bg-soft);
-  border: 1px solid var(--card-border-soft);
-  border-radius: 13px;
-}
+.day-bg.past { opacity: 0.55; }
+.day-header.past, .day-events.past { opacity: var(--past-opacity); }
 
 .day-header {
-  margin-bottom: 8px;
-  padding: 0 2px;
+  position: relative;
+  padding: 12px 14px 10px;
 }
 
 .day-name {
   margin: 0;
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 800;
+  line-height: 1.1;
 }
+.day-header.today .day-name { color: var(--accent); }
 
 .day-date {
-  margin: 2px 0 0;
-  font-size: 17px;
+  margin: 3px 0 0;
+  font-size: 20px;
   font-weight: 600;
   color: var(--muted);
+}
+
+.day-events {
+  position: relative;
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.span-bar {
+  position: relative;
+  z-index: 1;
+  margin: 0 10px 8px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  background: rgba(255, 209, 102, 0.16);
+  border: 1px solid rgba(255, 209, 102, 0.55);
+  border-radius: 10px;
+  box-shadow: 0 4px 14px var(--shadow);
+}
+.span-bar.cont-before { border-left-style: dashed; border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
+.span-bar.cont-after { border-right-style: dashed; border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
+.span-bar.past { opacity: var(--past-opacity); }
+
+.span-title {
+  font-size: 24px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.span-sub {
+  flex-shrink: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 /* ── Event cards ── */
 .event {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 9px;
-  padding: 8px 10px;
-  margin-bottom: 6px;
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 9px 12px;
 }
-
-.event:last-child { margin-bottom: 0; }
-
-.event-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dot {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-}
+.event.past { opacity: var(--past-opacity); }
 
 .event-title {
   margin: 0;
-  font-size: 21px;
+  font-size: 25px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
 }
 
 .event-time {
-  margin: 3px 0 0;
-  font-size: 17px;
+  margin: 4px 0 0;
+  font-size: 20px;
   font-weight: 600;
   color: var(--muted);
 }
 
 .event-loc {
   margin: 2px 0 0;
-  font-size: 16px;
+  font-size: 19px;
   color: var(--muted);
 }
 
 .event-desc {
-  margin: 3px 0 0;
-  font-size: 16px;
-  color: var(--text);
-  line-height: 1.45;
+  margin: 4px 0 0;
+  font-size: 18px;
+  line-height: 1.4;
 }
+
+.empty-week {
+  align-self: flex-start;
+  margin: 10px 0 0;
+  padding: 12px 22px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--card-bg-soft);
+  border: 1px solid var(--card-border-soft);
+  border-radius: 13px;
+}
+.empty-week.loading { margin-top: 0; }
+
+.next-up {
+  align-self: flex-start;
+  padding: 16px 26px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-left: 5px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px var(--shadow);
+}
+.next-up p { margin: 0; }
+.next-up-label {
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+.next-up-title { font-size: 36px; font-weight: 800; margin-top: 4px !important; }
+.next-up-date { font-size: 26px; font-weight: 600; color: var(--muted); }
+
+/* ── Announcement strip ── */
+.announce {
+  flex-shrink: 0;
+  margin-top: 16px;
+  min-height: 84px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 26px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-left: 5px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px var(--shadow);
+}
+
+.announce-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.announce-body {
+  flex: 1;
+  min-width: 0;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.25;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.announce-body.show { opacity: 1; }
+.announce-title { font-weight: 800; color: var(--accent); margin-right: 12px; }
+
+.announce-dots { display: flex; gap: 8px; flex-shrink: 0; }
+.announce-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+.announce-dots .dot.on { background: var(--accent); }
+
+/* ── Status line (bottom-left, in the page padding) ── */
+.status {
+  position: absolute;
+  left: var(--pad);
+  bottom: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+.status.warn { color: #FBBF24; }
 
 /* ── Sidebar ── */
 .sidebar {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 0;
   gap: var(--gap);
 }
 
@@ -326,36 +518,124 @@ main.layout {
   letter-spacing: 2px;
   line-height: 1;
   text-shadow: var(--text-shadow);
+  font-variant-numeric: tabular-nums;
 }
 
-.weather-wrap {
-  flex-shrink: 0;
-  width: var(--sidebar-w);
-  height: 594px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow: 0 6px 20px var(--shadow);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  opacity: 0.85;
-}
-
-/* Native widget is 335×495; scale 1.2× to fill 402×594 */
-.weather {
-  display: block;
-  width: 335px;
-  height: 495px;
-  transform-origin: top left;
-  transform: scale(1.2);
-  border: 0;
-}
-
-.theme-box {
-  position: relative;
+/* ── Weather panel: takes whatever height the theme graphic leaves ── */
+.weather-panel {
   flex: 1;
   min-height: 0;
-  width: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px var(--shadow);
+}
+
+.wx-empty { margin: auto; font-size: 24px; color: var(--muted); }
+
+.wx-alert {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.85);
+  color: #1c1204;
+}
+.wx-alert.sev-severe, .wx-alert.sev-extreme { background: rgba(220, 38, 38, 0.9); color: #fff; }
+.wx-alert-event { font-size: 22px; font-weight: 800; }
+.wx-alert-until { font-size: 17px; font-weight: 600; }
+
+.wx-now {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.wx-icon svg { display: block; width: 100%; height: 100%; }
+.wx-icon.big { width: 112px; height: 112px; flex-shrink: 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
+.wx-icon.small { width: 40px; height: 40px; }
+
+.wx-now-main { min-width: 0; }
+
+.wx-temp {
+  font-size: 96px;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -2px;
+  text-shadow: var(--text-shadow);
+}
+
+.wx-cond {
+  margin-top: 6px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+.wx-facts {
+  flex-shrink: 0;
+  margin-top: 12px;
+  font-size: 22px;
+  font-weight: 600;
+}
+.wx-feels { color: var(--muted); font-size: 20px; margin-top: 2px; }
+
+.wx-stats {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--card-border-soft);
+  border-bottom: 1px solid var(--card-border-soft);
+}
+.wx-stat { display: flex; flex-direction: column; min-width: 0; }
+.wx-stat-label { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.wx-stat-value { font-size: 22px; font-weight: 700; white-space: nowrap; }
+
+.wx-forecast {
+  flex: 1;
+  min-height: 0;
+  margin-top: 6px;
+}
+
+.wx-day {
+  display: grid;
+  grid-template-columns: 1fr 44px 58px 96px;
+  align-items: center;
+  column-gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.wx-day:last-child { border-bottom: 0; }
+.wx-day-name { font-size: 23px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wx-day-pop { font-size: 18px; font-weight: 700; color: #7DD3FC; text-align: right; }
+.wx-day-temps { display: flex; justify-content: flex-end; gap: 12px; font-size: 23px; font-weight: 700; }
+.wx-day-temps .lo { color: var(--muted); min-width: 40px; text-align: right; }
+
+.wx-foot {
+  flex-shrink: 0;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Theme graphic: sized by the image's own shape ── */
+.theme-box {
+  flex-shrink: 0;
+  padding: 14px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
@@ -363,16 +643,13 @@ main.layout {
 }
 
 .theme-image {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  width: calc(100% - 28px);
-  height: calc(100% - 28px);
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
   object-fit: contain;
 }
 
-/* Forced light backdrop for theme graphics with dark text/art, regardless of
-   the auto light/dark scheme. Toggled via THEME_BOX_BG in config.js. */
 .theme-box.light-bg {
   background: rgba(255, 255, 255, 0.75);
   border-color: rgba(15, 23, 42, 0.18);
