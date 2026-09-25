@@ -234,16 +234,6 @@
     return { startKey, endKey, cols: columns, spans, laneCount: lanes.length, empty: evs.length === 0 };
   }
 
-  // Timed events in progress. All-day events are already highlighted in
-  // today's column, so they're left out unless NOW_INCLUDE_ALL_DAY is set.
-  function happeningNow(t) {
-    return cal.events.filter(e => {
-      if (e.allDay && !cfg.NOW_INCLUDE_ALL_DAY) return false;
-      const end = e.end > e.start ? e.end : e.start;
-      return e.start <= t && t < end;
-    }).sort(eventSort);
-  }
-
   function countdown(todayKey) {
     const max = cfg.COUNTDOWN_MAX_DAYS ?? 30;
     if (!max || !cfg.COUNTDOWN_MATCH) return null;
@@ -294,7 +284,6 @@
     return {
       todayKey,
       hasData: !!cal.text,
-      now: happeningNow(t),
       weeks,
       titles: sectionTitles(weeks, todayKey),
       countdown: countdown(todayKey),
@@ -356,7 +345,7 @@
     const grid = el('div', 'week-grid');
     const n = week.cols.length;
     grid.style.gridTemplateColumns = `repeat(${n}, minmax(0, 1fr))`;
-    grid.style.gridTemplateRows = 'auto ' + 'auto '.repeat(week.laneCount) + '1fr';
+    grid.style.gridTemplateRows = 'auto '.repeat(week.laneCount + 2).trim();
     const lastRow = week.laneCount + 3;
 
     week.cols.forEach((c, i) => {
@@ -364,6 +353,7 @@
       const state = (c.isToday ? ' today' : '') + (c.isPast ? ' past' : '');
 
       const bg = el('div', 'day-bg' + state);
+      bg.dataset.col = col;
       bg.style.gridColumn = col;
       bg.style.gridRow = '1 / ' + lastRow;
       grid.appendChild(bg);
@@ -372,10 +362,13 @@
       dh.style.gridColumn = col;
       dh.style.gridRow = '1';
       dh.appendChild(el('h3', 'day-name', c.isToday ? 'Today' : fmtKey(c.key, { weekday: 'long' })));
-      dh.appendChild(el('p', 'day-date', fmtKey(c.key, { weekday: c.isToday ? 'long' : undefined, month: 'long', day: 'numeric' })));
+      dh.appendChild(el('p', 'day-date', c.isToday
+        ? fmtKey(c.key, { weekday: 'long', month: 'short', day: 'numeric' })
+        : fmtKey(c.key, { month: 'long', day: 'numeric' })));
       grid.appendChild(dh);
 
       const list = el('div', 'day-events' + state);
+      list.dataset.col = col;
       list.style.gridColumn = col;
       list.style.gridRow = String(week.laneCount + 2);
       c.events.forEach(item => list.appendChild(renderEvent(item)));
@@ -389,27 +382,6 @@
       const note = el('p', 'empty-week', 'No events scheduled');
       sec.appendChild(note);
     }
-    return sec;
-  }
-
-  function renderNow(list) {
-    if (!list.length) return null;
-    const sec = el('section', 'now');
-    const head = el('div', 'section-title-box');
-    head.appendChild(el('h2', 'section-title', 'Happening Now'));
-    sec.appendChild(head);
-    const wrap = el('div', 'now-wrap');
-    list.forEach(e => {
-      const card = el('div', 'now-card');
-      card.appendChild(el('h3', 'now-title', e.title));
-      let when;
-      if (e.allDay) when = e.endKey > e.startKey ? 'Through ' + fmtKey(e.endKey, { weekday: 'long', month: 'short', day: 'numeric' }) : 'All day';
-      else when = e.startKey === e.endKey ? 'Until ' + fmtTime(e.end) : timeRange(e);
-      card.appendChild(el('p', 'now-time', when));
-      if (e.location) card.appendChild(el('p', 'now-loc', e.location));
-      wrap.appendChild(card);
-    });
-    sec.appendChild(wrap);
     return sec;
   }
 
@@ -455,13 +427,11 @@
     renderCountdown(m.countdown);
 
     const sections = [];
-    const nowSec = renderNow(m.now);
     if (!m.hasData) {
       const p = el('p', 'empty-week loading', cal.lastError ? 'Waiting for the calendar…' : 'Loading calendar…');
       sections.push([p]);
     } else {
-      const first = [nowSec, renderWeek(m.weeks[0], m.titles[0])].filter(Boolean);
-      sections.push(first);
+      sections.push([renderWeek(m.weeks[0], m.titles[0])]);
       if (m.weeks[1]) sections.push([renderWeek(m.weeks[1], m.titles[1])]);
       if (m.nextUp) sections[sections.length - 1].push(renderNextUp(m.nextUp));
     }
@@ -489,18 +459,32 @@
     return Math.max(0, Math.ceil(track.scrollHeight - page.clientHeight));
   }
 
+  // Each day's panel ends just below its own last event, instead of every
+  // column stretching to the busiest day's height; the background shows
+  // through the rest. (Panels span grid rows so multi-day bars can sit on
+  // top of them, which is why this is measured rather than pure CSS.)
+  function sizeDayPanels(root) {
+    root.querySelectorAll('.week-grid').forEach(grid => {
+      grid.querySelectorAll('.day-bg').forEach(bg => {
+        const list = grid.querySelector(`.day-events[data-col="${bg.dataset.col}"]`);
+        bg.style.height = (list.offsetTop + list.offsetHeight - bg.offsetTop) + 'px';
+      });
+    });
+  }
+
   function layoutPages(groups) {
     clearTimeout(cycleTimer);
     elViewport.innerHTML = '';
     const all = makePage(groups.flat());
     all.classList.add('active');
     elViewport.appendChild(all);
+    sizeDayPanels(all);
     pages = [all];
 
     if (groups.length > 1 && overflowOf(all) > 0) {
       elViewport.innerHTML = '';
       pages = groups.map(g => makePage(g));
-      pages.forEach(p => elViewport.appendChild(p));
+      pages.forEach(p => { elViewport.appendChild(p); sizeDayPanels(p); });
     }
     showPage(0);
   }
@@ -724,6 +708,8 @@
     try { ann.list = JSON.parse(recall('announcements') || '[]'); } catch (e) { ann.list = []; }
 
     render(true);
+    // Text measurements change once the web font arrives.
+    if (document.fonts) document.fonts.ready.then(() => render(true));
     refreshAnnouncements();
     loadCalendar();
     loadAnnouncements();

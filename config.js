@@ -20,7 +20,6 @@ window.CALENDAR_CONFIG = {
   REFRESH_MINUTES: 15,        // calendar re-fetch interval
   SHOW_DESCRIPTION: false,    // show event descriptions on cards
   SHOW_NEXT_WEEK: true,
-  NOW_INCLUDE_ALL_DAY: false, // "Happening Now" lists timed events in progress; true adds all-day ones too
 
   // Countdown chip in the header, e.g. "12 school days until Thanksgiving Break".
   // COUNTDOWN_MATCH picks which events get counted down to; NO_SCHOOL_MATCH

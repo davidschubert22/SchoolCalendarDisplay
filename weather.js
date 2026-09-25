@@ -386,7 +386,7 @@
       }
       if (cur.humidity != null) stat('Humidity', round(cur.humidity) + '%');
       if (cur.rainToday != null) stat('Rain today', cur.rainToday.toFixed(2) + '"');
-      else if (today && today.pop != null) stat('Rain chance', today.pop + '%');
+      else if (today && today.pop != null) stat('Rain', today.pop + '% chance');
       root.appendChild(stats);
     }
 

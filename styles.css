@@ -154,15 +154,15 @@ main.layout {
 }
 
 #logo {
-  width: 100px;
-  height: 100px;
+  width: 92px;
+  height: 92px;
   object-fit: contain;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
 .titlestack h1 {
   margin: 0;
-  font-size: 50px;
+  font-size: 46px;
   font-weight: 800;
   letter-spacing: 0.2px;
   line-height: 1.1;
@@ -189,7 +189,7 @@ main.layout {
   align-items: center;
   gap: 16px;
   padding: 12px 22px;
-  max-width: 440px;
+  max-width: 520px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-left: 5px solid var(--accent);
@@ -198,7 +198,7 @@ main.layout {
 }
 
 .countdown-num {
-  font-size: 76px;
+  font-size: 72px;
   font-weight: 800;
   line-height: 1;
   color: var(--accent);
@@ -209,13 +209,14 @@ main.layout {
 .countdown-text { min-width: 0; }
 
 .countdown-lead {
-  font-size: 22px;
+  white-space: nowrap;
+  font-size: 23px;
   font-weight: 600;
   color: var(--muted);
 }
 
 .countdown-label {
-  font-size: 27px;
+  font-size: 28px;
   font-weight: 800;
   line-height: 1.15;
   display: -webkit-box;
@@ -242,7 +243,7 @@ main.layout {
 
 .section-title {
   margin: 0;
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 2.5px;
@@ -250,57 +251,26 @@ main.layout {
 }
 
 .section-range {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-/* ── Happening Now ── */
-.now, .week { display: flex; flex-direction: column; }
-
-.now-wrap {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.now-card {
-  -webkit-backdrop-filter: var(--glass);
-  backdrop-filter: var(--glass);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-left: 5px solid var(--accent);
-  padding: 12px 20px;
-  border-radius: var(--radius);
-  box-shadow: 0 6px 20px var(--shadow);
-  min-width: 280px;
-  max-width: 100%;
-}
-
-.now-title {
-  margin: 0 0 4px;
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.now-time, .now-loc {
-  margin: 0;
   font-size: 24px;
   font-weight: 600;
   color: var(--muted);
 }
 
+.week { display: flex; flex-direction: column; }
+
 /* ── Week grid ──
    Each day is a column; .day-bg draws the card behind the header, any
    multi-day bars, and that day's events. Bars span several columns. */
 .week-grid {
+  position: relative; /* offset parent for sizeDayPanels() */
   display: grid;
+  align-items: start;
   column-gap: 14px;
   row-gap: 0;
 }
 
 .day-bg {
+  align-self: start;
   -webkit-backdrop-filter: var(--glass);
   backdrop-filter: var(--glass);
   background: var(--card-bg-soft);
@@ -320,12 +290,12 @@ main.layout {
 
 .day-header {
   position: relative;
-  padding: 12px 14px 10px;
+  padding: 12px 12px 8px;
 }
 
 .day-name {
   margin: 0;
-  font-size: 30px;
+  font-size: 34px;
   font-weight: 800;
   line-height: 1.1;
 }
@@ -333,14 +303,14 @@ main.layout {
 
 .day-date {
   margin: 3px 0 0;
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 600;
   color: var(--muted);
 }
 
 .day-events {
   position: relative;
-  padding: 8px 10px 10px;
+  padding: 6px 8px 8px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -349,8 +319,8 @@ main.layout {
 .span-bar {
   position: relative;
   z-index: 1;
-  margin: 0 10px 8px;
-  padding: 8px 14px;
+  margin: 0 8px 8px;
+  padding: 8px 12px;
   display: flex;
   align-items: baseline;
   gap: 12px;
@@ -370,7 +340,7 @@ main.layout {
 .span-bar.past .span-sub { color: var(--past-muted); }
 
 .span-title {
-  font-size: 24px;
+  font-size: 27px;
   font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
@@ -380,7 +350,7 @@ main.layout {
 
 .span-sub {
   flex-shrink: 0;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 600;
   color: var(--muted);
   white-space: nowrap;
@@ -392,7 +362,7 @@ main.layout {
   border: 1px solid var(--card-border-soft);
   border-left: 4px solid rgba(255, 255, 255, 0.35);
   border-radius: 10px;
-  padding: 9px 12px;
+  padding: 8px 10px;
 }
 .day-events.today .event { border-left-color: var(--accent); }
 .event.past,
@@ -406,22 +376,22 @@ main.layout {
 
 .event-title {
   margin: 0;
-  font-size: 25px;
+  font-size: 29px;
   font-weight: 700;
-  line-height: 1.22;
+  line-height: 1.18;
   overflow-wrap: anywhere;
 }
 
 .event-time {
   margin: 4px 0 0;
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 600;
   color: var(--muted);
 }
 
 .event-loc {
   margin: 2px 0 0;
-  font-size: 19px;
+  font-size: 21px;
   color: var(--muted);
 }
 
@@ -437,7 +407,7 @@ main.layout {
   align-self: flex-start;
   margin: 10px 0 0;
   padding: 12px 22px;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 600;
   color: var(--muted);
   background: var(--card-bg-soft);
@@ -500,7 +470,7 @@ main.layout {
 .announce-body {
   flex: 1;
   min-width: 0;
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 600;
   line-height: 1.25;
   opacity: 0;
@@ -623,7 +593,7 @@ main.layout {
 
 .wx-cond {
   margin-top: 6px;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--muted);
   line-height: 1.2;
@@ -632,24 +602,24 @@ main.layout {
 .wx-facts {
   flex-shrink: 0;
   margin-top: 12px;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
 }
-.wx-feels { color: var(--muted); font-size: 20px; margin-top: 2px; }
+.wx-feels { color: var(--muted); font-size: 22px; margin-top: 2px; }
 
 .wx-stats {
   flex-shrink: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 14px;
   padding: 12px 0;
   border-top: 1px solid var(--card-border-soft);
   border-bottom: 1px solid var(--card-border-soft);
 }
 .wx-stat { display: flex; flex-direction: column; min-width: 0; }
-.wx-stat-label { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-.wx-stat-value { font-size: 22px; font-weight: 700; white-space: nowrap; }
+.wx-stat-label { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); white-space: nowrap; }
+.wx-stat-value { font-size: 24px; font-weight: 700; white-space: nowrap; }
 
 .wx-forecast {
   flex: 1;
@@ -666,17 +636,17 @@ main.layout {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 .wx-day:last-child { border-bottom: 0; }
-.wx-day-name { font-size: 23px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wx-day-pop { font-size: 18px; font-weight: 700; color: #7DD3FC; text-align: right; }
-.wx-day-temps { display: flex; justify-content: flex-end; gap: 12px; font-size: 23px; font-weight: 700; }
+.wx-day-name { font-size: 25px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wx-day-pop { font-size: 20px; font-weight: 700; color: #7DD3FC; text-align: right; }
+.wx-day-temps { display: flex; justify-content: flex-end; gap: 12px; font-size: 25px; font-weight: 700; }
 .wx-day-temps .lo { color: var(--muted); min-width: 40px; text-align: right; }
 
 .wx-foot {
   flex-shrink: 0;
   margin-top: 6px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 /* ── Theme graphic: sized by the image's own shape ── */
