@@ -4,9 +4,11 @@
 //
 // Sources
 //   Forecast + alerts: api.weather.gov (NWS, free, no key, CORS-enabled)
-//   Current:           the signage-api Worker when WEATHER.STATION_API_URL is set
-//                      (school WeatherLink station, else WeatherSTEM HQ),
-//                      otherwise the latest NWS observation from WEATHER.NWS_STATION.
+//   Current, in order: 1. the signage-api Worker (school WeatherLink station)
+//                         when WEATHER.STATION_API_URL is set and reporting
+//                      2. WeatherSTEM's API v2 browser library, when
+//                         WEATHER.WEATHERSTEM.API_KEY is set
+//                      3. the latest NWS observation from WEATHER.NWS_STATION
 (function () {
   'use strict';
 
@@ -166,7 +168,7 @@
     if (!j || !j.ok || j.temp_f == null) return null;
     if (Date.now() - j.ts * 1000 > 30 * 60000) return null; // station hasn't reported recently
     return {
-      source: (W.SOURCE_LABELS || {})[j.source] || j.source || 'Station',
+      source: W.STATION_LABEL || 'School station',
       at: new Date(j.ts * 1000),
       temp: j.temp_f,
       feels: j.feels_f,
@@ -199,9 +201,89 @@
     };
   }
 
+  // ── WeatherSTEM (API v2) ──────────────────────────────────────────────────
+  // API v2 is a browser library: it checks the key (and that this page's
+  // hostname is on the key's allowed list), then fills in elements tagged
+  // data-feature="Sensor" data-name="<sensor>" about once a minute. We give it
+  // a hidden block of those elements and read the numbers back out.
+
+  const WS = W.WEATHERSTEM || {};
+  const WS_SENSORS = {
+    temp: 'Thermometer', hum: 'Hygrometer', wind: 'Anemometer', dir: 'Wind Vane',
+    gust: '10 Minute Wind Gust', heat: 'Heat Index', chill: 'Wind Chill'
+  };
+  const stem = { box: null, sig: '', changedAt: 0 };
+
+  function startWeatherStem() {
+    if (!WS.API_KEY) return;
+    const meta = document.createElement('meta');
+    meta.name = 'Weatherstem-api-key';
+    meta.content = WS.API_KEY;
+    document.head.appendChild(meta);
+
+    const box = document.createElement('div');
+    box.hidden = true;
+    box.setAttribute('data-scope', WS.STATION || 'wxstemhq@leon.weatherstem.com');
+    for (const [k, name] of Object.entries(WS_SENSORS)) {
+      const f = document.createElement('div');
+      f.setAttribute('data-feature', 'Sensor');
+      f.setAttribute('data-name', name);
+      f.dataset.key = k;
+      const v = document.createElement('span');
+      v.setAttribute('data-subfeature', 'Value');
+      const u = document.createElement('span');
+      u.setAttribute('data-subfeature', 'Units');
+      f.append(v, u);
+      box.appendChild(f);
+    }
+    document.body.appendChild(box);
+    stem.box = box;
+
+    const script = document.createElement('script');
+    script.src = 'https://apiv2.weatherstem.com/apiv2.min.js';
+    document.body.appendChild(script);
+  }
+
+  function stemCurrent() {
+    if (!stem.box) return null;
+    const vals = {};
+    for (const f of stem.box.children) {
+      const spans = f.querySelectorAll('[data-subfeature]');
+      const n = parseFloat(spans[0].textContent);
+      if (!isNaN(n)) vals[f.dataset.key] = { n, unit: spans[1].textContent.toLowerCase() };
+    }
+    if (!vals.temp) return null;
+
+    // The library doesn't expose a reading time, so treat the data as stale
+    // once none of the values has changed for 90 minutes.
+    const sig = JSON.stringify(vals);
+    if (sig !== stem.sig) { stem.sig = sig; stem.changedAt = Date.now(); }
+    if (Date.now() - stem.changedAt > 90 * 60000) return null;
+
+    const f = v => v == null ? null : (/c/.test(v.unit) && !/f/.test(v.unit) ? cToF(v.n) : v.n);
+    const mph = v => v == null ? null : (/km/.test(v.unit) ? v.n * 0.621371 : /m\/s/.test(v.unit) ? v.n * 2.23694 : v.n);
+    const temp = f(vals.temp), heat = f(vals.heat), chill = f(vals.chill);
+    let feels = temp;
+    if (heat != null && heat > temp) feels = heat;
+    else if (chill != null && chill < temp) feels = chill;
+    return {
+      source: WS.LABEL || 'WeatherSTEM',
+      at: new Date(stem.changedAt),
+      temp,
+      feels,
+      humidity: vals.hum ? vals.hum.n : null,
+      wind: mph(vals.wind),
+      gust: mph(vals.gust),
+      windDir: vals.dir ? vals.dir.n : null,
+      rainToday: null,
+      text: null
+    };
+  }
+
   async function loadCurrent() {
     let cur = null;
     try { cur = await loadStation(); } catch (err) { console.warn('Station weather unavailable:', err); }
+    if (!cur) cur = stemCurrent();
     if (!cur) {
       try { cur = await loadNwsObservation(); } catch (err) { console.error('NWS observation failed:', err); }
     }
@@ -338,9 +420,12 @@
     state.current = recall('current');
     render();
 
+    startWeatherStem();
     loadForecast();
     loadAlerts();
     loadCurrent();
+    // WeatherSTEM's library needs a few seconds to load; look again soon.
+    if (WS.API_KEY) setTimeout(loadCurrent, 20000);
     setInterval(loadForecast, 30 * 60000);
     setInterval(loadAlerts, 5 * 60000);
     setInterval(loadCurrent, 5 * 60000);

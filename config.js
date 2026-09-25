@@ -49,15 +49,24 @@ window.CALENDAR_CONFIG = {
   ANNOUNCEMENT_SECONDS: 10,
 
   // Weather panel. Forecast and alerts come from the National Weather Service
-  // (free, no key). Current conditions come from the signage-api Worker's
-  // /weather endpoint when STATION_API_URL is set (see worker/README.md):
-  // the school's WeatherLink station, or the WeatherSTEM HQ station when the
-  // school's isn't reporting. The Tallahassee airport (NWS) is the last resort.
+  // (free, no key). Current conditions come from, in order:
+  //   1. the school's WeatherLink station, via the signage-api Worker, when
+  //      STATION_API_URL is set (see worker/README.md)
+  //   2. WeatherSTEM HQ (Shannon Lakes N), when WEATHERSTEM.API_KEY is set.
+  //      This is an "API V2" key. It is meant to be public; WeatherSTEM only
+  //      accepts it from the hostnames listed on the key.
+  //   3. the Tallahassee airport (NWS)
+  // A source is skipped when it isn't reporting (e.g. overnight).
   WEATHER: {
     LAT: 30.5395,
     LON: -84.2230,
     STATION_API_URL: "",                 // e.g. "https://signage-api.dtestechnology.workers.dev/weather"
-    SOURCE_LABELS: { weatherlink: "DeSoto Trail station", weatherstem: "WeatherSTEM HQ" },
+    STATION_LABEL: "DeSoto Trail station",
+    WEATHERSTEM: {
+      API_KEY: "",
+      STATION: "wxstemhq@leon.weatherstem.com",
+      LABEL: "WeatherSTEM HQ"
+    },
     NWS_STATION: "KTLH",
     NWS_STATION_LABEL: "Tallahassee Airport"
   },

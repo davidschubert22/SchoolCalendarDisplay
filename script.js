@@ -8,6 +8,10 @@
   const SCREEN_ID = params.get('screen') || '';
   const SCHOOL_DAYS = cfg.SCHOOL_DAYS || [1, 2, 3, 4, 5];
 
+  // A modal alert() would freeze a sign until someone clicks OK (WeatherSTEM's
+  // library uses one for errors). Log instead.
+  window.alert = msg => console.warn('alert() suppressed:', msg);
+
   const $ = id => document.getElementById(id);
   const elViewport = $('scroll-viewport');
 

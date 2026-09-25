@@ -93,9 +93,23 @@ appear within about 5–15 minutes. Each entry:
 - **GitHub Pages** hosts the board.
 - **`red-frost-1be1` Worker** (existing) fetches the ICS calendar, which gets
   around CORS.
-- **`signage-api` Worker** (optional, new) handles current conditions (school
-  WeatherLink station, then WeatherSTEM HQ), the heartbeat and the status
-  page. See [`worker/README.md`](worker/README.md).
+- **`signage-api` Worker** (optional, new) handles the school WeatherLink
+  station, heartbeat and status page.
+- **WeatherSTEM HQ** (optional) is the fallback for current conditions, loaded
+  in the page with WeatherSTEM's API v2 library. See "WeatherSTEM" below. See [`worker/README.md`](worker/README.md).
+
+## WeatherSTEM
+
+1. Log in at weatherstem.com, go to **weatherstem.com/apiv2_docs → My API V2
+   Keys**, and click **Generate API Key**.
+2. On the key, add the host `davidschubert22.github.io`, check **Requires
+   SSL**, and enable the **Sensor** feature.
+3. Paste the key into `config.js` → `WEATHER.WEATHERSTEM.API_KEY` and commit.
+
+The key is designed to be public: WeatherSTEM only honors it on the hosts you
+list. The library loads jQuery and Google Maps scripts from WeatherSTEM's
+setup; any error pop-ups it tries to show are suppressed so they can't freeze
+a screen.
 
 ## Kiosk PCs
 
