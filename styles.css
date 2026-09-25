@@ -7,21 +7,34 @@
 }
 
 :root {
-  --card-bg: rgba(0, 0, 0, 0.38);
-  --card-bg-soft: rgba(0, 0, 0, 0.30);
+  --card-bg: rgba(0, 0, 0, 0.42);
+  --card-bg-soft: rgba(0, 0, 0, 0.36);
+  --event-bg: rgba(0, 0, 0, 0.30);
+  /* Frosted glass: blurring what's behind a panel removes the busy detail
+     (palm fronds, foliage) that hurts legibility, while keeping the scene's
+     color and light. Turned off with GLASS_BLUR: false in config.js. */
+  --glass: blur(18px) saturate(1.3);
   --card-border: rgba(255, 255, 255, 0.20);
   --card-border-soft: rgba(255, 255, 255, 0.14);
   --accent: #FFD166;
   --accent-soft: rgba(255, 209, 102, 0.22);
   --text: #F8FAFC;
-  --muted: #CBD5E1;
+  --muted: #DCE3EC;
+  --past-text: #C3CCD7;
+  --past-muted: #AAB5C2;
   --text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
   --shadow: rgba(0, 0, 0, 0.42);
   --radius: 16px;
   --sidebar-w: 402px;
   --pad: 28px;
   --gap: 18px;
-  --past-opacity: 0.45;
+}
+
+/* No-blur fallback for slow GPUs: make up for it with denser panels. */
+body.no-blur {
+  --glass: none;
+  --card-bg: rgba(0, 0, 0, 0.55);
+  --card-bg-soft: rgba(0, 0, 0, 0.50);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -127,6 +140,8 @@ main.layout {
 }
 
 .title {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   display: flex;
   align-items: center;
   gap: 18px;
@@ -156,6 +171,7 @@ main.layout {
 }
 
 .subtitle {
+  text-shadow: var(--text-shadow);
   margin: 6px 0 0;
   font-size: 32px;
   font-weight: 600;
@@ -164,6 +180,8 @@ main.layout {
 
 /* Countdown chip */
 .countdown {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   margin-left: auto;
   flex: 0 1 auto;
   min-width: 0;
@@ -208,6 +226,8 @@ main.layout {
 
 /* ── Section labels ── */
 .section-title-box {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   display: inline-flex;
   align-items: baseline;
   gap: 16px;
@@ -245,6 +265,8 @@ main.layout {
 }
 
 .now-card {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-left: 5px solid var(--accent);
@@ -279,6 +301,8 @@ main.layout {
 }
 
 .day-bg {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   background: var(--card-bg-soft);
   border: 1px solid var(--card-border-soft);
   border-radius: 14px;
@@ -291,8 +315,8 @@ main.layout {
   background: rgba(0, 0, 0, 0.42);
 }
 
-.day-bg.past { opacity: 0.55; }
-.day-header.past, .day-events.past { opacity: var(--past-opacity); }
+.day-header.past .day-name { color: var(--past-text); }
+.day-header.past .day-date { color: var(--past-muted); }
 
 .day-header {
   position: relative;
@@ -338,7 +362,12 @@ main.layout {
 }
 .span-bar.cont-before { border-left-style: dashed; border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
 .span-bar.cont-after { border-right-style: dashed; border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
-.span-bar.past { opacity: var(--past-opacity); }
+.span-bar.past {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.span-bar.past .span-title { color: var(--past-text); }
+.span-bar.past .span-sub { color: var(--past-muted); }
 
 .span-title {
   font-size: 24px;
@@ -359,13 +388,21 @@ main.layout {
 
 /* ── Event cards ── */
 .event {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-left: 4px solid var(--accent);
+  background: var(--event-bg);
+  border: 1px solid var(--card-border-soft);
+  border-left: 4px solid rgba(255, 255, 255, 0.35);
   border-radius: 10px;
   padding: 9px 12px;
 }
-.event.past { opacity: var(--past-opacity); }
+.day-events.today .event { border-left-color: var(--accent); }
+.event.past,
+.day-events.past .event {
+  background: rgba(0, 0, 0, 0.18);
+  border-left-color: rgba(255, 255, 255, 0.18);
+}
+.event.past .event-title, .day-events.past .event-title { color: var(--past-text); }
+.event.past .event-time, .day-events.past .event-time,
+.event.past .event-loc, .day-events.past .event-loc { color: var(--past-muted); }
 
 .event-title {
   margin: 0;
@@ -395,6 +432,8 @@ main.layout {
 }
 
 .empty-week {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   align-self: flex-start;
   margin: 10px 0 0;
   padding: 12px 22px;
@@ -408,6 +447,8 @@ main.layout {
 .empty-week.loading { margin-top: 0; }
 
 .next-up {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   align-self: flex-start;
   padding: 16px 26px;
   background: var(--card-bg);
@@ -429,6 +470,8 @@ main.layout {
 
 /* ── Announcement strip ── */
 .announce {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   flex-shrink: 0;
   margin-top: 16px;
   min-height: 84px;
@@ -501,6 +544,8 @@ main.layout {
 }
 
 .clockbox {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   flex-shrink: 0;
   height: 86px;
   display: flex;
@@ -523,6 +568,8 @@ main.layout {
 
 /* ── Weather panel: takes whatever height the theme graphic leaves ── */
 .weather-panel {
+  -webkit-backdrop-filter: var(--glass);
+  backdrop-filter: var(--glass);
   flex: 1;
   min-height: 0;
   overflow: hidden;

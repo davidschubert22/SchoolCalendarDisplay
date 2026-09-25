@@ -260,7 +260,12 @@
     for (let k = todayKey; k < next.startKey; k = ICS.addDays(k, 1)) {
       if (isSchoolDay(k) && !offDays.some(e => covers(e, k))) n++;
     }
-    const label = next.title.replace(/\s*[-–—:]\s*no school\s*$/i, '').trim() || next.title;
+    // Two-part titles: keep the part that says what's happening.
+    // "Labor Day- No School" → "Labor Day"; "Early Release Day - Last Day of
+    // School" → "Last Day of School".
+    const parts = next.title.split(/\s+[-–—:]\s+|\s*[-–—]\s*(?=no school)/i).map(p => p.trim()).filter(Boolean);
+    const named = parts.filter(p => !/^no school$/i.test(p));
+    const label = named.find(p => target.test(p)) || named[0] || next.title;
     const daysAway = ICS.diffDays(todayKey, next.startKey);
     return { n, label, noSchool: noSchoolRe.test(next.title) && label !== next.title, daysAway, key: next.startKey };
   }
@@ -704,6 +709,7 @@
     applyScaling();
     window.addEventListener('resize', () => { applyScaling(); });
 
+    document.body.classList.toggle('no-blur', cfg.GLASS_BLUR === false);
     $('board-title').textContent = cfg.TITLE || "This Week's Events";
     applyTheme();
     videoWatchdog();

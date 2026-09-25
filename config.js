@@ -36,6 +36,11 @@ window.CALENDAR_CONFIG = {
   THEME_BOX_BG: "light",
   THEME_GRAPHIC: "assets/theme-graphic.png",
 
+  // Frosted-glass blur behind the panels (improves readability over busy
+  // backgrounds). If a kiosk PC's video stutters, set this to false; panels
+  // then get darker instead.
+  GLASS_BLUR: true,
+
   // When This Week + Next Week don't fit on screen together, the board
   // alternates between them. PAGE_SECONDS is how long each one stays up.
   // If a single week is still too tall, it scrolls slowly within its turn.
